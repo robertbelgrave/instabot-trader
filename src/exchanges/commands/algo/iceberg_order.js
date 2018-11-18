@@ -18,7 +18,7 @@ module.exports = async (context, args) => {
     }, args);
 
     // Get the params in units we can use (numbers!)
-    p.totalAmount = parseFloat(p.totalAmount);
+    p.totalAmount = util.round(parseFloat(p.totalAmount), ex.api.precision);
     p.averageAmount = parseFloat(p.averageAmount);
     p.limitPrice = parseFloat(p.limitPrice);
     p.timeLimit = ex.timeToSeconds(p.timeLimit, 0);
@@ -69,15 +69,16 @@ module.exports = async (context, args) => {
             // are we the right side of the limit price?
             if (isUnderLimitPrice) {
                 // Figure out how big the order should be (90% to 110% of average amount)
-                let amount = p.averageAmount * util.randomRange(0.9, 1.1);
+                let amount = util.round(p.averageAmount * util.randomRange(0.9, 1.1), ex.api.precision);
                 if (amount > amountLeft) amount = amountLeft;
 
                 // figure out some prices for the order
                 const offset = currentPrice - (currentPrice * (1 - variance));
                 const orderPrice = isBuy ? currentPrice - offset : currentPrice + offset;
+                const now = new Date().toISOString();
                 stopPrice = isBuy ? currentPrice + offset : currentPrice - offset;
-                logger.info(`${amountLeft} of Iceberg Order still to fill`);
-                logger.info(`Placing order for ${amount}. cancelling at ${stopPrice}`);
+                logger.info(`${amountLeft} of Iceberg Order still to fill at ${now}`);
+                logger.info(`Placing order for ${amount} at ${orderPrice}. cancelling at ${stopPrice}`);
 
                 // place a new limit order
                 const orderParams = [

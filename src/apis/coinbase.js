@@ -1,6 +1,7 @@
 const async = require('async');
 const Gdax = require('gdax');
 const log = require('../common/logger');
+const util = require('../common/util');
 const ApiInterface = require('./api');
 
 const logger = log.logger;
@@ -24,6 +25,14 @@ class Coinbase extends ApiInterface {
         // rate limiting - when can we next make a call, and how often (in ms)
         this.nextCallAt = Date.now();
         this.minTimeBetweenCalls = 250;
+    }
+
+    static formatPrice(price) {
+        return String(util.round(price, 2));
+    }
+
+    static formatAmount(amount) {
+        return String(util.round(amount, this.precision));
     }
 
     /**
@@ -87,8 +96,8 @@ class Coinbase extends ApiInterface {
             type: 'limit',
             side,
             product_id: symbol,
-            price: String(price),
-            size: String(amount),
+            price: Coinbase.formatPrice(price),
+            size: Coinbase.formatAmount(amount),
             post_only: true,
         };
 
@@ -106,7 +115,7 @@ class Coinbase extends ApiInterface {
             type: 'market',
             side,
             product_id: symbol,
-            size: String(amount),
+            size: Coinbase.formatAmount(amount),
         };
 
         return this.rateLimit().then(() => this.authClient.placeOrder(params));
@@ -125,9 +134,9 @@ class Coinbase extends ApiInterface {
             type: 'market',
             side,
             product_id: symbol,
-            size: String(amount),
+            size: Coinbase.formatAmount(amount),
             stop: side === 'sell' ? 'loss' : 'entry',
-            stop_price: price,
+            stop_price: Coinbase.formatPrice(price),
         };
 
         return this.rateLimit().then(() => this.authClient.placeOrder(params));
