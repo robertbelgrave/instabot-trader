@@ -27,11 +27,11 @@ class Coinbase extends ApiInterface {
         this.minTimeBetweenCalls = 250;
     }
 
-    static formatPrice(price) {
+    formatPrice(price) {
         return String(util.round(price, 2));
     }
 
-    static formatAmount(amount) {
+    formatAmount(amount) {
         return String(util.round(amount, this.precision));
     }
 
@@ -96,8 +96,8 @@ class Coinbase extends ApiInterface {
             type: 'limit',
             side,
             product_id: symbol,
-            price: Coinbase.formatPrice(price),
-            size: Coinbase.formatAmount(amount),
+            price: this.formatPrice(price),
+            size: this.formatAmount(amount),
             post_only: true,
         };
 
@@ -115,7 +115,7 @@ class Coinbase extends ApiInterface {
             type: 'market',
             side,
             product_id: symbol,
-            size: Coinbase.formatAmount(amount),
+            size: this.formatAmount(amount),
         };
 
         return this.rateLimit().then(() => this.authClient.placeOrder(params));
@@ -134,9 +134,9 @@ class Coinbase extends ApiInterface {
             type: 'market',
             side,
             product_id: symbol,
-            size: Coinbase.formatAmount(amount),
+            size: this.formatAmount(amount),
             stop: side === 'sell' ? 'loss' : 'entry',
-            stop_price: Coinbase.formatPrice(price),
+            stop_price: this.formatPrice(price),
         };
 
         return this.rateLimit().then(() => this.authClient.placeOrder(params));
