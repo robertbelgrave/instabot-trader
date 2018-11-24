@@ -65,15 +65,16 @@ class Exchange {
 
             // Other commands
             cancelOrders,
+            wait,
             notify,
             balance,
-            wait,
         };
 
         this.commandWhiteList = [
-            'scaledOrder', 'twapOrder', 'steppedMarketOrder', 'icebergOrder', 'pingPongOrder',
+            'icebergOrder', 'scaledOrder', 'twapOrder', 'pingPongOrder',
+            'steppedMarketOrder', 'accDisOrder',
             'limitOrder', 'marketOrder', 'stopMarketOrder',
-            'cancelOrders', 'wait', 'macro', 'notify', 'balance'];
+            'cancelOrders', 'wait', 'notify', 'balance'];
     }
 
     /**

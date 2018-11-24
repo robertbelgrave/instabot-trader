@@ -282,11 +282,10 @@ class DeribitApi extends ApiInterface {
         const params = {
             instrument: symbol.toUpperCase(),
             type: 'stop_market',
-            quantity: String(util.roundDown(amount, 0)),
-            stopPx: String(price),
+            quantity: util.roundDown(amount, 0),
+            stopPx: price,
             execInst: trigger === 'index' ? 'index_price' : 'mark_price', // index price or mark price used for stop trigger
-            time_in_force: 'good_till_cancel',
-            post_only: true,
+            time_in_force: 'good_til_cancelled',
         };
 
         return this.makeAuthRequest(`/api/v1/private/${side}`, params)
