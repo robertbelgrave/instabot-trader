@@ -301,6 +301,7 @@ class DeribitApi extends ApiInterface {
     activeOrders(symbol, side) {
         const params = {
             instrument: symbol.toUpperCase(),
+            type: 'any'
         };
 
         return this.makeAuthRequest('/api/v1/private/getopenorders', params)
