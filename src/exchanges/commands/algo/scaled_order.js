@@ -36,7 +36,7 @@ module.exports = async (context, args) => {
 
     // Figure out the size of each order
     const modifiedPosition = await ex.positionToAmount(symbol, p.position, p.side, p.amount);
-    if (p.amount.value === 0) {
+    if (modifiedPosition.amount.value === 0) {
         logger.results('Scaled order not placed, as order size is Zero.');
         return Promise.resolve([]);
     }
