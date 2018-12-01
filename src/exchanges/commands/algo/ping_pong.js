@@ -3,15 +3,23 @@ const logger = require('../../../common/logger').logger;
 const scaledOrder = require('./scaled_order');
 
 
+/**
+ * Once an order fills, place a new order on the other side of the book
+ * @param context
+ * @param p
+ * @param original
+ * @returns {Promise<*>}
+ */
 async function placeOppositeOrder(context, p, original) {
     // Need to place the 'pong' order on the other side of the book
     const { ex = {}, symbol = '', session = '' } = context;
     const side = original.side === 'buy' ? 'sell' : 'buy';
     const price = original.side === 'buy' ? original.price + p.pongDistance : original.price - p.pongDistance;
+    const amount = p.side === original.side ? p.pongAmount : p.pingAmount;
     const limitOrderArgs = [
         { name: 'side', value: side, index: 0 },
         { name: 'offset', value: `@${price}`, index: 1 },
-        { name: 'amount', value: `${original.amount}${original.units}`, index: 2 },
+        { name: 'amount', value: `${amount}${original.units}`, index: 2 },
         { name: 'tag', value: p.tag, index: 3 },
     ];
 
@@ -19,9 +27,7 @@ async function placeOppositeOrder(context, p, original) {
 }
 
 /**
- * scaledOrder
- * scaledOrder(from, to, orderCount, amount, side, tag)
- * scaledOrder(from, to, orderCount, position, tag)
+ * pingPongOrder
  */
 module.exports = async (context, args) => {
     const { ex = {}, symbol = '', session = '' } = context;
@@ -38,20 +44,43 @@ module.exports = async (context, args) => {
         tag: 'pingpong',
         position: '',
         pongDistance: '20',
+        pingAmount: '0',
+        pongAmount: '0',
         endless: 'false',
     }, args);
+
+    // ping pong orders do not support position
+    p.position = '';
+
+    // get the pong distance as a number
+    p.pongDistance = parseFloat(p.pongDistance);
+    p.endless = (p.endless.toLowerCase() === 'true');
+    p.pingAmount = Math.max(parseFloat(p.pingAmount), 0);
+    p.pongAmount = Math.max(parseFloat(p.pongAmount), 0);
+
+    // prefer ping and pong amounts to Amount or Position
+    if ((p.pingAmount > 0) && (p.pongAmount > 0)) {
+        p.amount = String(p.pingAmount * p.orderCount);
+    } else {
+        const modifiedPosition = await ex.positionToAmount(symbol, p.position, p.side, p.amount);
+        const orderCount = Math.max(Math.min(parseInt(p.orderCount, 10), 100), 2);
+        p.pingAmount = p.pongAmount = modifiedPosition.amount.value / orderCount;
+    }
 
     // show a little progress
     logger.progress(`PING PONG ORDER - ${ex.name}`);
     logger.progress(p);
 
-    // get the pong distance as a number
-    p.pongDistance = parseFloat(p.pongDistance);
-    p.endless = (p.endless.toLowerCase() === 'true');
-
     // step one - place a scaled order...
-    let waitTime = ex.minPollingDelay;
-    const orders = await scaledOrder(context, args);
+    const scaledOrderArgs = [
+        { name: 'from', value: p.from, index: 0 },
+        { name: 'to', value: p.to, index: 1 },
+        { name: 'orderCount', value: p.orderCount, index: 2 },
+        { name: 'amount', value: p.amount, index: 3 },
+        { name: 'side', value: p.side, index: 4 },
+        { name: 'tag', value: p.tag, index: 5 },
+    ];
+    const orders = await scaledOrder(context, scaledOrderArgs);
 
     // Call all these orders the pings and give them a starting age of 0 (increments each time they fill and swap sides)
     let pongs = [];
@@ -69,6 +98,7 @@ module.exports = async (context, args) => {
 
     // now we have to wait for the pings to be filled
     // (actually only need to check the first one that would be hit)
+    let waitTime = ex.minPollingDelay;
     while ((p.endless && pongs.length) || pings.length) {
         // Has the algo order been cancelled - if so, cancel all outstanding orders and stop
         if (ex.isAlgoOrderCancelled(id)) {
