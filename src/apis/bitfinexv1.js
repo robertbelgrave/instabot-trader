@@ -28,6 +28,8 @@ class BitfinexApiv1 extends ApiInterface {
         this.nextCallAt = Date.now();
         this.minTimeBetweenCalls = 1000;
 
+        this.locked = false;
+
         // the nonce will start at now and gets incremented with each call
         this.nonce = Date.now();
         this.generateNonce = () => { this.nonce += 1; return this.nonce; };
@@ -36,17 +38,53 @@ class BitfinexApiv1 extends ApiInterface {
     /**
      * make an API call and reties it a few times if the call failed
      * @param requestOptions
+     * @param payload
      * @param maxAttempts
      * @param cb
      */
-    callAPIWithRetries(requestOptions, maxAttempts, cb) {
+    callAPIWithRetries(requestOptions, payload, maxAttempts, cb) {
+        const stepDelay = 5000;
+        const baseDelay = 28000;
+        let actualDelay = baseDelay;
+
         async.retry({
             times: maxAttempts,
-            interval: retryCount => 28000 + (5000 * retryCount),
+            interval: (retryCount) => {
+                const i = actualDelay + (stepDelay * retryCount);
+                actualDelay = baseDelay;
+                return i;
+            },
             errorFilter: err => (err === 503 || err === 502 || err === 429),
         }, (next) => {
             const t0 = Date.now();
+
+            // if we are locked, wait
+            if (this.locked) {
+                logger.dim('API waiting for another call - waiting');
+                actualDelay = 1;
+                return next(429);
+            }
+
+            // not locked, so lock now
+            this.locked = true;
+
+            if (payload) {
+                payload.nonce = JSON.stringify(this.generateNonce());
+                const stringToSign = Buffer.from(JSON.stringify(payload)).toString('base64');
+                const signature = crypto.createHmac('sha384', this.secret).update(stringToSign).digest('hex');
+
+                requestOptions.headers = {
+                    'X-BFX-APIKEY': this.key,
+                    'X-BFX-PAYLOAD': stringToSign,
+                    'X-BFX-SIGNATURE': signature,
+                };
+            }
+
             request(requestOptions, (error, response, body) => {
+                // take the lock off
+                this.locked = false;
+
+                // figure out if it worked
                 const t1 = Date.now();
                 const duration = (t1 - t0).toFixed(3);
                 logger.debug(`${requestOptions.method} to ${requestOptions.url} took ${duration}ms`);
@@ -118,9 +156,10 @@ class BitfinexApiv1 extends ApiInterface {
      * @param url
      * @param method
      * @param headers
+     * @param payload
      * @returns {*}
      */
-    callAPI(url, method, headers) {
+    callAPI(url, method, headers, payload) {
         const requestOptions = {
             url,
             method,
@@ -131,11 +170,10 @@ class BitfinexApiv1 extends ApiInterface {
         // Figure out if we need to rate limit ourselves a bit
         const currentTime = Date.now();
         const waitBeforeCall = this.nextCallAt > currentTime ? (this.nextCallAt - currentTime) + 1 : 1;
-        if (waitBeforeCall > 1) logger.dim(`Rate limiting myself by waiting ${waitBeforeCall}ms`);
 
         // make the call
         return new Promise((resolve, reject) => {
-            setTimeout(() => this.callAPIWithRetries(requestOptions, 10, (err, response) => {
+            setTimeout(() => this.callAPIWithRetries(requestOptions, payload, 20, (err, response) => {
                 if (err) return reject(err);
                 return resolve(response);
             }), waitBeforeCall);
@@ -155,11 +193,9 @@ class BitfinexApiv1 extends ApiInterface {
         }
 
         const url = `${this.url}/${this.version}/${path}`;
-        const nonce = JSON.stringify(this.generateNonce());
 
         const payload = Object.assign({
             request: `/v1/${path}`,
-            nonce,
         }, params);
 
         const stringToSign = Buffer.from(JSON.stringify(payload)).toString('base64');
@@ -171,7 +207,7 @@ class BitfinexApiv1 extends ApiInterface {
             'X-BFX-SIGNATURE': signature,
         };
 
-        return this.callAPI(url, 'POST', headers);
+        return this.callAPI(url, 'POST', headers, payload);
     }
 
     /**
@@ -181,7 +217,7 @@ class BitfinexApiv1 extends ApiInterface {
      */
     makePublicRequest(path) {
         const url = `${this.url}/${this.version}/${path}`;
-        return this.callAPI(url, 'GET', {});
+        return this.callAPI(url, 'GET', {}, null);
     }
 
     /**
