@@ -28,6 +28,7 @@ if (config.get('notifications.alertOnStartup')) {
 // Prepare Express
 const app = express();
 const url = config.get('server.url');
+const healthCheckUrl = config.get('server.healthCheck');
 const port = parseInt(config.get('server.port'), 10);
 
 // middleware to decode the query params in the request
@@ -42,6 +43,10 @@ app.use((req, res, next) => {
 const manager = new ExchangeManager(allExchanges);
 notifier.setExchangeManager(manager);
 
+
+/**
+ * Bot handler
+ */
 app.post(url, (req, res) => {
     logger.notice('HTTP POST request received...');
 
@@ -59,6 +64,12 @@ app.post(url, (req, res) => {
     // Respond to the request
     return res.send(message);
 });
+
+
+/**
+ * Health check endpoint (for load balancers)
+ */
+app.get(healthCheckUrl, (req, res) => res.send(''));
 
 
 /**
