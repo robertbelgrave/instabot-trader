@@ -78,7 +78,8 @@ module.exports = async (context, args) => {
         { name: 'orderCount', value: p.orderCount, index: 2 },
         { name: 'amount', value: p.amount, index: 3 },
         { name: 'side', value: p.side, index: 4 },
-        { name: 'tag', value: p.tag, index: 5 },
+        { name: 'easing', value: p.easing, index: 5 },
+        { name: 'tag', value: p.tag, index: 6 },
     ];
     const orders = await scaledOrder(context, scaledOrderArgs);
 
