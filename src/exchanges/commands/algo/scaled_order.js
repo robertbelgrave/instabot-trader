@@ -74,7 +74,23 @@ module.exports = async (context, args) => {
     return new Promise((resolve, reject) => timesSeries(p.orderCount, async (i) => {
         // Place the order
         try {
-            // Work out the settings to place a limit order
+            // If there are no units we can place the order directly and save on API calls
+            if (p.amount.units === '') {
+                // Place the order
+                const order = await ex.api.limitOrder(symbol, amounts[i], prices[i], p.side, false);
+                ex.addToSession(session, p.tag, order);
+                logger.results(`Limit order placed (${p.side}) at ${prices[i]} for ${amounts[i]}.`);
+                logger.dim(order);
+                return {
+                    order,
+                    side: p.side,
+                    price: prices[i],
+                    amount: amounts[i],
+                    units: '',
+                };
+            }
+
+            // A more complex case, we'll just push it to teh standard limit order solution
             const limitOrderArgs = [
                 { name: 'side', value: p.side, index: 0 },
                 { name: 'offset', value: `@${prices[i]}`, index: 1 },
