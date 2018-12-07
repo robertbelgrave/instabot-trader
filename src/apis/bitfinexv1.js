@@ -26,7 +26,7 @@ class BitfinexApiv1 extends ApiInterface {
 
         // rate limiting - when can we next make a call, and how often (in ms)
         this.nextCallAt = Date.now();
-        this.minTimeBetweenCalls = 1000;
+        this.minTimeBetweenCalls = 500;
 
         this.locked = false;
 
@@ -54,7 +54,7 @@ class BitfinexApiv1 extends ApiInterface {
                 actualDelay = baseDelay;
                 return i;
             },
-            errorFilter: err => (err === 503 || err === 502 || err === 429),
+            errorFilter: err => (err === 503 || err === 502 || err === 500 || err === 429),
         }, (next) => {
             const t0 = Date.now();
 
@@ -94,7 +94,7 @@ class BitfinexApiv1 extends ApiInterface {
                     logger.error(error);
 
                     // look for connection reset error (we'll treat as overloaded)
-                    if ((typeof error === 'object') && (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT')) {
+                    if ((typeof error === 'object') && (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' || error.code === 'ESOCKETTIMEDOUT')) {
                         // treat this as a rate limit, so we'll wait and try again
                         return next(429, 0);
                     }
