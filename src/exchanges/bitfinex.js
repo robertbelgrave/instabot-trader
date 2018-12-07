@@ -17,6 +17,9 @@ class Bitfinex extends Exchange {
         super(credentials);
         this.name = 'bitfinex';
 
+        this.minPollingDelay = 2;
+        this.maxPollingDelay = 20;
+
         // start up any sockets or create API handlers here.
         this.api = new BitfinexApiv1(credentials.key, credentials.secret);
     }
