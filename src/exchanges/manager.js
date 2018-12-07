@@ -49,7 +49,8 @@ class ExchangeManager {
         }
 
         // no match, so try and create a new instance with the details
-        const match = this.exchanges.find(el => el.name === name);
+        const exchangeName = credentials.exchange || name;
+        const match = this.exchanges.find(el => el.name === exchangeName);
         if (!match) return null;
 
         // Create a new instance of the exchange with the credentials given

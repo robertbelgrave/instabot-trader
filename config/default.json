@@ -2,16 +2,19 @@
   "credentials": [
     {
       "name": "deribit",
+      "exchange": "deribit",
       "key": "api-key",
       "secret": "api-secret"
     },
     {
       "name": "bitfinex",
+      "exchange": "bitfinex",
       "key": "api-key",
       "secret": "api-secret"
     },
     {
       "name": "coinbase",
+      "exchange": "coinbase",
       "endpoint": "https://api.pro.coinbase.com",
       "key": "api-key",
       "secret": "api-secret",
