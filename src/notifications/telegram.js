@@ -132,8 +132,8 @@ class TelegramNotifier {
                 this.lastChatId = ctx.message.chat.id;
                 logger.progress('Showing list of shortcuts in Telegram chat');
                 const shortcuts = config.get('telegram.shortcuts');
-                const msg = shortcuts.reduce((fullMsg, item) => `${fullMsg}\n*${item.name}* - ${item.message}`, 'Found the following shortcuts...');
-                ctx.reply(msg, {parse_mode: 'Markdown'});
+                const msg = shortcuts.reduce((fullMsg, item) => `${fullMsg}\n\`${item.name}\` - ${item.message}`, 'Found the following shortcuts...');
+                ctx.replyWithMarkdown(msg);
             }
         });
 
