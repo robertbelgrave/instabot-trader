@@ -85,24 +85,17 @@ class TelegramNotifier {
         bot.start((ctx) => {
             if (this.isSafeUser(ctx.message.from.id)) {
                 this.lastChatId = ctx.message.chat.id;
+                ctx.reply('Yep...');
             }
             logger.progress(`Chat started on Telegram. Chat ID: ${ctx.message.chat.id}. User Id: ${ctx.message.from.id}`);
-            ctx.reply('Instabot Trader 🤖 is at your disposal... /help for more...');
         });
 
         // Handle requests for help
         bot.help(ctx => ctx.reply(
-            'Send me a message to execute trades or send alerts...\n' +
-            'Full Docs: [https://instabot42.github.io/](https://instabot42.github.io/)\n' +
-            'Message Format: [https://instabot42.github.io/#api-format](https://instabot42.github.io/#api-format)\n' +
-            'Command Reference: [https://instabot42.github.io/#api-Command_Reference](https://instabot42.github.io/#api-Command_Reference)\n\n' +
-            '*Example Message*\n' +
-            '```\n' +
-            'bitfinex(BTCUSD) { balance(); }\n' +
-            '```\n\n' +
+            'Send me a message and I\'ll give it a go...\n' +
             '`/help` - This message\n' +
-            '`/list` - List all the shortcuts defined in your config.\n' +
-            '`/shortcut name` - execute a message defined in your config/local.json called name', {parse_mode: 'Markdown'}));
+            '`/list` - List your custom shortcuts.\n' +
+            '`/shortcut name` - Use the named shortcut', { parse_mode: 'Markdown' }));
 
         // If someone sends us a sticker...
         bot.on('sticker', ctx => setTimeout(() => ctx.reply('👍🖥💰📈'), 1000));
@@ -121,7 +114,7 @@ class TelegramNotifier {
                     if (match) {
                         // execute the message and respond when everything is done
                         await Promise.all(this.exchangeManager.executeMessage(match.message, config.get('credentials')));
-                        ctx.reply(`Just finished working on\n\`${match.message}\`\n🤞`, {parse_mode: 'Markdown'});
+                        ctx.reply(`Just finished working on\n\`${match.message}\`\n🤞`, { parse_mode: 'Markdown' });
                     }
                 }
             }
@@ -151,13 +144,17 @@ class TelegramNotifier {
             if (this.isSafeUser(ctx.message.from.id) && this.exchangeManager) {
                 this.lastChatId = ctx.message.chat.id;
                 logger.progress('Generic message from Telegram chat');
-                ctx.reply("OK. I'll try and deal with that. I'll let you know when it's done... 👍");
+                ctx.reply('Working on it 👍');
 
                 // execute the message and respond when everything is done
                 await Promise.all(this.exchangeManager.executeMessage(ctx.message.text, config.get('credentials')));
 
                 // let them know we are done
-                ctx.reply(`Just finished working on\n\`${ctx.message.text}\`\n🤞`, {parse_mode: 'Markdown'});
+                ctx.reply(`Done\n\`${ctx.message.text}\`\n🤞`, { parse_mode: 'Markdown' });
+            } else {
+                // Not from a known user, so log something
+                logger.progress('Telegram message from unknown user');
+                logger.dim(ctx.message);
             }
         });
 

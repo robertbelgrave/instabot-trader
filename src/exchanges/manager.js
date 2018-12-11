@@ -211,7 +211,7 @@ class ExchangeManager {
      */
     commandBlocks(msg, cb) {
         const regex = new Fregex();
-        regex.forEach(/([a-z]+)\(([^()]*?)\)\s*{([\s\S]*?)}/gi, msg, (m) => {
+        regex.forEach(/([a-z][a-z0-9]*)\(([^()]*?)\)\s*{([\s\S]*?)}/gi, msg, (m) => {
             // Extract the parts
             const exchangeName = m[1].trim().toLowerCase();
             const symbol = m[2].trim();
