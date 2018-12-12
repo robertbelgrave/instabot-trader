@@ -5,6 +5,7 @@
     "config": "^2.0.1",
     "express": "^4.16.2",
     "gdax": "^0.8.0",
+    "get-stdin": "^6.0.0",
     "request": "^2.88.0",
     "slack-node": "^0.1.8",
     "telegraf": "^3.24.1",
@@ -38,6 +39,7 @@
   "name": "instabot-trader",
   "scripts": {
     "start": "node src/index.js",
+    "sign": "node src/sign.js",
     "setup": "cp -n config/default.json config/local.json || true",
     "test": "mocha",
     "watch": "mocha --watch",
