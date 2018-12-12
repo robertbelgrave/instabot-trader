@@ -1,12 +1,12 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const config = require('config');
-const crypto = require('crypto');
 const logger = require('./common/logger').logger;
 const ExchangeManager = require('./exchanges/manager');
 const allExchanges = require('./exchanges/all');
 const notifier = require('./notifications/notifier');
 const allNotifiers = require('./notifications/all');
+const validateSignature = require('./common/validate_signature');
 
 // Set up the logger
 logger.setLevel(config.get('server.logLevel'));
@@ -31,6 +31,8 @@ const app = express();
 const url = config.get('server.url');
 const healthCheckUrl = config.get('server.healthCheck');
 const port = parseInt(config.get('server.port'), 10);
+const signingMethod = config.get('server.security.signingMethod').toLowerCase();
+const secret = config.get('server.security.secret');
 
 // middleware to decode the query params in the request
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -46,42 +48,6 @@ notifier.setExchangeManager(manager);
 
 
 /**
- * Something to validate messages if needed
- */
-function validateSignature(message) {
-    const signingMethod = config.get('server.security.signingMethod').toLowerCase();
-    if (signingMethod === '' || signingMethod === 'none') {
-        return true;
-    }
-
-    // Look for the signature in the message
-    let signature = '';
-    const secret = config.get('server.security.secret');
-    const regex = /sig:([a-zA-Z0-9]+)/;
-    const m = regex.exec(message);
-    if (m !== null) {
-        signature = m[1];
-    }
-
-    // The signature is just a simple password
-    if (signingMethod === 'password') {
-        return secret === signature;
-    }
-
-    // The signature is the hash of the message
-    if (signingMethod === 'hash') {
-        // remove the signature from the message, and trim white space
-        const toSign = message.replace(regex, '').trim();
-        const hash = crypto.createHmac('sha256', secret).update(toSign).digest('hex').substring(16, 32);
-
-        return hash === signature;
-    }
-
-    // probably a bad signing method
-    return false;
-}
-
-/**
  * Bot handler
  */
 app.post(url, (req, res) => {
@@ -95,7 +61,7 @@ app.post(url, (req, res) => {
         return res.sendStatus(400);
     }
 
-    if (!validateSignature(message)) {
+    if (!validateSignature(message, signingMethod, secret)) {
         logger.error('Message has an invalid signature - discarding.');
         logger.error(req.body);
         return res.sendStatus(400);
