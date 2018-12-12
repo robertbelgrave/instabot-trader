@@ -47,6 +47,10 @@
     "url": "/trade",
     "healthCheck": "/health",
     "port": 3000,
-    "logLevel": 1
+    "logLevel": 1,
+    "security": {
+      "signingMethod": "none",
+      "secret": ""
+    }
   }
 }
