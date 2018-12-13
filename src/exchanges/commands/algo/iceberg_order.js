@@ -18,7 +18,7 @@ module.exports = async (context, args) => {
     }, args);
 
     // Get the params in units we can use (numbers!)
-    p.totalAmount = util.round(parseFloat(p.totalAmount), ex.api.precision);
+    p.totalAmount = ex.roundAsset(p.totalAmount);
     p.averageAmount = parseFloat(p.averageAmount);
     p.limitPrice = parseFloat(p.limitPrice);
     p.timeLimit = ex.timeToSeconds(p.timeLimit, 0);
@@ -69,7 +69,7 @@ module.exports = async (context, args) => {
             // are we the right side of the limit price?
             if (isUnderLimitPrice) {
                 // Figure out how big the order should be (90% to 110% of average amount)
-                let amount = util.round(p.averageAmount * util.randomRange(0.9, 1.1), ex.api.precision);
+                let amount = ex.roundAsset(p.averageAmount * util.randomRange(0.9, 1.1));
                 if (amount > amountLeft) amount = amountLeft;
 
                 // figure out some prices for the order

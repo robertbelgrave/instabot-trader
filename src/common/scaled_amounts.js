@@ -5,10 +5,10 @@ const util = require('./util');
  * @param orderCount
  * @param totalSpend
  * @param randomDiff - 0-1
- * @param precision
+ * @param round
  * @returns {number[]}
  */
-module.exports = (orderCount, totalSpend, randomDiff = 0, precision = 6) => {
+module.exports = (orderCount, totalSpend, randomDiff, round) => {
     // No orders, no results
     if (orderCount < 1) {
         return [];
@@ -28,7 +28,7 @@ module.exports = (orderCount, totalSpend, randomDiff = 0, precision = 6) => {
     let error = 0;
     return randomised.map((entry) => {
         const wish = (entry * scaleFactor) + error;
-        const have = util.round(wish, precision);
+        const have = round(wish);
         error = wish - have;
         return have;
     });

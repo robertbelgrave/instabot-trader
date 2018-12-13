@@ -36,8 +36,10 @@ class Exchange {
         this.refCount = 1;
 
         this.minOrderSize = 0.002;
-        this.minPollingDelay = 5;
-        this.maxPollingDelay = 60;
+        this.pricePrecision = 2;
+        this.assetPrecision = 6;
+        this.minPollingDelay = 1;
+        this.maxPollingDelay = 20;
 
         this.sessionOrders = [];
         this.algorithicOrders = [];
@@ -106,7 +108,7 @@ class Exchange {
     /**
      * Called after the exchange has been created, but before it has been used.
      */
-    init() {
+    async init(symbol) {
         // nothing
     }
 
@@ -115,6 +117,24 @@ class Exchange {
      */
     terminate() {
         // chance for any last minute shutdown stuff
+    }
+
+    /**
+     * Rounds the price. eg, on the BTCUSD pair, this would be rounding the amount of USD
+     * @param price
+     * @returns {*}
+     */
+    roundPrice(price) {
+        return util.roundDown(price, this.pricePrecision);
+    }
+
+    /**
+     * Rounds an amount of assets. eg on BTCUSD pair, this would be round an amount of BTC
+     * @param assets
+     * @returns {*}
+     */
+    roundAsset(assets) {
+        return util.roundDown(assets, this.assetPrecision);
     }
 
     /**
@@ -333,7 +353,7 @@ class Exchange {
             return t;
         }, 0);
 
-        const roundedTotal = util.roundDown(total, 4);
+        const roundedTotal = this.roundAsset(total);
         logger.results(`Total @ ${price}: ${roundedTotal} ${asset.asset}`);
         return roundedTotal;
     }
@@ -358,7 +378,7 @@ class Exchange {
             return t;
         }, 0);
 
-        const roundedTotal = util.roundDown(total, 4);
+        const roundedTotal = this.roundPrice(total);
         logger.results(`Total @ ${price}: ${roundedTotal} ${asset.currency}`);
         return roundedTotal;
     }
@@ -390,7 +410,7 @@ class Exchange {
             return total;
         }, 0);
 
-        const roundedTotal = util.roundDown(spendable, 4);
+        const roundedTotal = this.roundAsset(spendable);
         logger.results(`Asset balance @ ${price}: ${roundedTotal}`);
         return roundedTotal;
     }
@@ -427,7 +447,7 @@ class Exchange {
             total,
             available,
             isAllAvailable: (orderSize === available),
-            orderSize: util.roundDown(orderSize, 4),
+            orderSize: this.roundAsset(orderSize),
         };
     }
 
@@ -443,7 +463,7 @@ class Exchange {
         const regex = /@([0-9]+(\.[0-9]*)?)/;
         const m = regex.exec(offsetStr);
         if (m) {
-            return Promise.resolve(util.roundDown(parseFloat(m[1]), 4));
+            return Promise.resolve(this.roundPrice(parseFloat(m[1])));
         }
 
         // must be a regular offset or % offset, so we'll need to know the current price
@@ -452,11 +472,12 @@ class Exchange {
         if (side === 'buy') {
             const currentPrice = parseFloat(orderbook.bid);
             const finalOffset = offset.units === '%' ? currentPrice * (offset.value / 100) : offset.value;
-            return util.roundDown(currentPrice - finalOffset, 2);
+
+            return this.roundPrice(currentPrice - finalOffset);
         }
         const currentPrice = parseFloat(orderbook.ask);
         const finalOffset = offset.units === '%' ? currentPrice * (offset.value / 100) : offset.value;
-        return util.roundDown(currentPrice + finalOffset, 2);
+        return this.roundPrice(currentPrice + finalOffset);
     }
 
     /**
@@ -508,7 +529,7 @@ class Exchange {
 
         // We want `position`, but have `total`
         const target = parseFloat(position);
-        const change = util.roundDown(target - total, 4);
+        const change = this.roundAsset(target - total);
 
         return { side: change < 0 ? 'sell' : 'buy', amount: { value: Math.abs(change), units: '' } };
     }

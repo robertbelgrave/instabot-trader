@@ -54,6 +54,38 @@ class Util {
     }
 
     /**
+     * Round a number of a given number of significant figures
+     * @param value - the number
+     * @param sigFigures
+     * @returns {number}
+     */
+    static roundSignificantFigures(value, sigFigures) {
+        // Match every "leading zeros" before and after the .
+        let matches = value.toString().match(/^-?(0+)\.(0*)/);
+
+        // starting with 0.
+        if (matches) {
+            const firstIndex = matches[0].length;
+            const prefix = matches[0];
+
+            const sfString = value.toString().substring(firstIndex, firstIndex + sigFigures + 1);
+            let sf = Number(sfString);
+            if (sfString.length > sigFigures) {
+                sf = Math.round(sf / 10);
+            }
+            sf = prefix + sf.toString();
+            return parseFloat(Number(sf).toFixed(matches[2].length + sigFigures));
+        }
+
+        // starting with something else
+        matches = value.toString().match(/^(-?(\d+))(\.(\d+))?/);
+        const decimalShift = sigFigures - matches[2].length;
+        let rounded = Math.round(value * (10 ** decimalShift));
+        rounded /= (10 ** decimalShift);
+        return parseFloat(rounded.toFixed(decimalShift));
+    }
+
+    /**
      * rounds a number to a given number of decimal places
      * @param value
      * @param exp

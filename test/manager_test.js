@@ -11,36 +11,36 @@ describe('Exchange Manager tests', () => {
         assert.equal(nothing, undefined);
     });
 
-    it('can ask for an exchange that does not exist', () => {
+    it('can ask for an exchange that does not exist', async () => {
         const manager = new ExchangeManager([]);
-        const ex = manager.openExchange('test', {});
+        const ex = await manager.openExchange('test', {});
         assert.isNull(ex);
     });
 
-    it('can create an exchange when asked', () => {
+    it('can create an exchange when asked', async () => {
         class DummyExchange { init() {} validate() { return 'valid'; }}
         const manager = new ExchangeManager([{ name: 'test', class: DummyExchange }]);
-        const ex = manager.openExchange('test', {});
+        const ex = await manager.openExchange('test', {});
         assert.equal(ex.validate(), 'valid');
     });
 
-    it('can find the exchange when its there', () => {
+    it('can find the exchange when its there', async () => {
         const manager = new ExchangeManager([{ name: 'test', class: Exchange }]);
-        const ex = manager.openExchange('test', {});
-        const ex2 = manager.openExchange('test', {});
+        const ex = await manager.openExchange('test', {});
+        const ex2 = await manager.openExchange('test', {});
         assert.deepEqual(ex, ex2);
     });
 
-    it('can close exchanges that dont exist', () => {
+    it('can close exchanges that dont exist', async () => {
         const manager = new ExchangeManager([]);
         const ex = new Exchange({});
         manager.closeExchange(null);
         manager.closeExchange(ex);
     });
 
-    it('can close exchanges that do exist', () => {
+    it('can close exchanges that do exist', async () => {
         const manager = new ExchangeManager([{ name: 'test', class: Exchange }]);
-        const ex = manager.openExchange('test', {});
+        const ex = await manager.openExchange('test', {});
         assert.lengthOf(manager.opened, 1);
         manager.closeExchange(ex);
         assert.lengthOf(manager.opened, 0);

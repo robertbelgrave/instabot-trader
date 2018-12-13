@@ -28,11 +28,11 @@ class Coinbase extends ApiInterface {
     }
 
     formatPrice(price) {
-        return String(util.round(price, 2));
+        return String(price);
     }
 
     formatAmount(amount) {
-        return String(util.round(amount, this.precision));
+        return String(amount);
     }
 
     /**
@@ -49,6 +49,21 @@ class Coinbase extends ApiInterface {
 
             setTimeout(() => resolve(), waitBeforeCall);
         });
+    }
+
+    /**
+     * Find out the precision used for the symbol
+     * @param symbol
+     * @returns {Promise<void>}
+     */
+    async init(symbol) {
+        const products = await this.publicClient.getProducts();
+        const match = products.filter(s => s.id.toLowerCase() === symbol.toLowerCase()).shift();
+        if (!match) {
+            logger.error(`Symbol ${symbol} not accessible on Coinbase.`);
+        }
+
+        return match;
     }
 
     /**

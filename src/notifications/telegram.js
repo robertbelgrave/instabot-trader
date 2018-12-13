@@ -1,6 +1,6 @@
 const config = require('config');
 const Telegraf = require('telegraf');
-const Markup = require('telegraf/markup')
+const Markup = require('telegraf/markup');
 const logger = require('../common/logger').logger;
 
 
@@ -126,16 +126,16 @@ class TelegramNotifier {
                 logger.progress('Showing list of shortcuts in Telegram chat');
                 const shortcuts = config.get('telegram.shortcuts');
                 const msg = shortcuts.reduce((fullMsg, item) => `${fullMsg}\n\`/shortcut ${item.name}\` - ${item.message}`, 'Found the following shortcuts...');
-                const cmds = []
-                shortcuts.forEach(function(element) {
-                  cmds.push('/shortcut '+element.name)
+                const cmds = [];
+                shortcuts.forEach((element) => {
+                    cmds.push(`/shortcut ${element.name}`);
                 });
                 ctx.replyWithMarkdown(msg, Markup
-                  .keyboard(cmds)
-                  .oneTime()
-                  .resize()
-                  .extra()
-                )
+                    .keyboard(cmds)
+                    .oneTime()
+                    .resize()
+                    .extra(),
+                );
             }
         });
 

@@ -18,9 +18,14 @@ class Deribit extends Exchange {
         super(credentials);
         this.name = 'deribit';
 
-        this.minOrderSize = 1;
         this.minPollingDelay = 0;
         this.maxPollingDelay = 10;
+
+        this.minOrderSize = 1;
+        this.assetPrecision = 0;
+        this.pricePrecision = 2;
+        this.tickSize = 0.5;
+
 
         // start up any sockets or create API handlers here.
         this.api = new DeribitApi(credentials.key, credentials.secret);
@@ -30,6 +35,36 @@ class Deribit extends Exchange {
         this.commands.balance = balance;
     }
 
+    /**
+     * Called after the exchange has been created, but before it has been used.
+     */
+    async init(symbol) {
+        // start the api
+        const symbolDetails = await this.api.init(symbol);
+
+        if (symbolDetails) {
+            const calcPrecision = (v) => {
+                let precision = 0;
+                let value = v;
+                while (value < 1) {
+                    value *= 10;
+                    precision += 1;
+                }
+                return precision;
+            };
+
+            if (symbolDetails.kind === 'option') {
+                logger.error('That symbol is for an option. This isn\'t designed for that. Denied.');
+                throw 'Options not supported';
+            }
+
+            logger.dim(symbolDetails);
+            this.minOrderSize = symbolDetails.minTradeSize;
+            this.assetPrecision = calcPrecision(symbolDetails.minTradeSize);
+            this.pricePrecision = symbolDetails.pricePrecision;
+            this.tickSize = symbolDetails.tickSize;
+        }
+    }
 
     /**
      * Handle shutdown
@@ -37,6 +72,15 @@ class Deribit extends Exchange {
     terminate() {
         logger.progress('Deribit exchange closing down');
         super.terminate();
+    }
+
+    /**
+     * Rounds the price to 50c values
+     * @param price
+     * @returns {*}
+     */
+    roundPrice(price) {
+        return util.round(price / this.tickSize, 0) * this.tickSize;
     }
 
     /**
@@ -59,7 +103,7 @@ class Deribit extends Exchange {
             total: 0,
             available: 0,
             isAllAvailable: false,
-            orderSize: util.round(amount.value, 0),
+            orderSize: this.roundAsset(amount.value),
         });
     }
 
@@ -86,7 +130,7 @@ class Deribit extends Exchange {
             // Filter the results down to just hte symbol we are using
             logger.dim(openPositions);
             const positionSize = openPositions.reduce((size, item) => ((item.instrument.toUpperCase() !== symbol.toUpperCase()) ? size : item.size), 0);
-            const change = util.roundDown(parseInt(targetPosition, 10) - positionSize, 0);
+            const change = this.roundAsset(parseInt(targetPosition, 10) - positionSize);
 
             return { side: change < 0 ? 'sell' : 'buy', amount: { value: Math.abs(change), units: '' } };
         });
