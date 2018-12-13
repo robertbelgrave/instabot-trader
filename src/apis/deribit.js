@@ -27,9 +27,6 @@ class DeribitApi extends ApiInterface {
         // Keep hold of the API key and secret
         this.key = key;
         this.secret = secret;
-
-        // whole numbers of contracts only...
-        this.precision = 0;
     }
 
     /**
@@ -200,6 +197,19 @@ class DeribitApi extends ApiInterface {
         };
 
         return this.callAPI(url, method, headers, params);
+    }
+
+    /**
+     * Find out the precision used for the symbol
+     * @param symbol
+     * @returns {Promise<void>}
+     */
+    async init(symbol) {
+        const url = '/api/v1/public/getinstruments';
+        const params = { expired: false };
+        const all = await this.makeAuthRequest(url, params);
+
+        return all.filter(s => s.instrumentName.toLowerCase() === symbol.toLowerCase()).shift();
     }
 
     /**

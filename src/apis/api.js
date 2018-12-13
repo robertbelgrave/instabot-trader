@@ -6,7 +6,16 @@ class ApiInterface {
      * @param secret
      */
     constructor(key, secret) {
-        this.precision = 6;
+    }
+
+    /**
+     * Called when the exchange is created, allowing the exchange to start up any sockets
+     * or look up details of the symbol being traded.
+     * @param symbol
+     * @returns {Promise<void>}
+     */
+    init(symbol) {
+        return Promise.resolve();
     }
 
     /**

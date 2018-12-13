@@ -22,6 +22,35 @@ class Coinbase extends Exchange {
     }
 
     /**
+     * Called after the exchange has been created, but before it has been used.
+     */
+    async init(symbol) {
+        // start the api
+        const symbolDetails = await this.api.init(symbol);
+        if (symbolDetails) {
+            logger.dim(symbolDetails);
+            this.minOrderSize = parseFloat(symbolDetails.base_min_size);
+
+            const calcPrecision = (v) => {
+                let precision = 0;
+                let value = parseFloat(v);
+                while (value < 1) {
+                    value *= 10;
+                    precision += 1;
+                }
+                return precision;
+            };
+
+            // How to round prices
+            this.pricePrecision = calcPrecision(symbolDetails.quote_increment);
+
+            // allow a bit more precision where some is allowed, as the exchange does not seem to stop this
+            const ap = calcPrecision(symbolDetails.base_min_size);
+            this.assetPrecision = ap === 0 ? 0 : ap + 1;
+        }
+    }
+
+    /**
      * Handle shutdown
      */
     terminate() {

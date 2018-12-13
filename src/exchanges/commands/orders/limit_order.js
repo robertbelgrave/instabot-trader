@@ -45,7 +45,8 @@ module.exports = async (context, args) => {
     // Place the order
     const order = await ex.api.limitOrder(symbol, details.orderSize, orderPrice, side, details.isAllAvailable);
     ex.addToSession(session, params.tag, order);
-    logger.results(`Limit order placed (${side}) at ${orderPrice} for ${details.orderSize}.`);
+    const now = new Date();
+    logger.results(`Limit order placed at ${now.toTimeString()}. ${side} ${details.orderSize} at ${orderPrice}.`);
     logger.dim(order);
     return {
         order,

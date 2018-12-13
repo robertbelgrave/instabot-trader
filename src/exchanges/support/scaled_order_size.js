@@ -57,5 +57,5 @@ module.exports = async (context, p) => {
     }
 
     // We had enough funds, so just do as they asked
-    return util.roundDown(assetToSpend, 6);
+    return ex.roundAsset(assetToSpend);
 };

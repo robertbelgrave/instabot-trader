@@ -221,6 +221,16 @@ class BitfinexApiv1 extends ApiInterface {
     }
 
     /**
+     * Find out the precision used for the symbol
+     * @param symbol
+     * @returns {Promise<void>}
+     */
+    async init(symbol) {
+        const symbols = await this.makePublicRequest('symbols_details');
+        return symbols.filter(s => s.pair.toLowerCase() === symbol.toLowerCase()).shift();
+    }
+
+    /**
      * Get the ticker for a symbol
      * @param symbol
      * @returns {*}

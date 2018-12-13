@@ -38,7 +38,7 @@ class ExchangeManager {
      * @param credentials
      * @returns {*}
      */
-    openExchange(name, credentials) {
+    async openExchange(name, credentials, symbol) {
         // Search the open exchanges to see if we have a match
         const exchange = this.findOpened(name, credentials);
 
@@ -60,7 +60,13 @@ class ExchangeManager {
         this.opened.push(newExchange);
 
         // Let the exchange do anything it needs before it is used.
-        newExchange.init();
+        try {
+            await newExchange.init(symbol);
+        } catch (err) {
+            logger.error(err);
+            this.closeExchange(newExchange);
+            return null;
+        }
 
         return newExchange;
     }
@@ -240,15 +246,16 @@ class ExchangeManager {
 
         // regex to break the message up into the bits we need
         const all = [Promise.resolve()];
-        this.commandBlocks(msg, (exchangeName, symbol, actions) => {
+        this.commandBlocks(msg, async (exchangeName, symbol, actions) => {
             const exchangeCredentials = credentials.find(item => item.name === exchangeName);
             if (exchangeCredentials) {
-                const exchange = this.openExchange(exchangeName, exchangeCredentials);
+                const exchange = await this.openExchange(exchangeName, exchangeCredentials, symbol);
                 if (exchange) {
                     all.push(this.executeCommandSequence(exchange, symbol, actions)
                         .catch((err) => {
                             logger.error(`Command sequence terminated - ${err}`);
-                        }).finally(() => setTimeout(() => this.closeExchange(exchange), 500)));
+                        })
+                        .finally(() => setTimeout(() => this.closeExchange(exchange), 500)));
                 } else {
                     logger.error(`Exchange '${exchangeName}' is not supported`);
                 }

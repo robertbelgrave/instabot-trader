@@ -1,4 +1,3 @@
-const util = require('./util');
 const easing = require('./easing');
 
 
@@ -9,9 +8,10 @@ const easing = require('./easing');
  * @param to
  * @param randomDiff
  * @param easingFunction
+ * @param round
  * @returns {number[]}
  */
-function scaledPrices(orderCount, from, to, randomDiff = 0, easingFunction = 'linear') {
+module.exports = (orderCount, from, to, randomDiff = 0, easingFunction = 'linear', round) => {
     // No orders, no results
     if (orderCount < 1) {
         return [];
@@ -31,8 +31,5 @@ function scaledPrices(orderCount, from, to, randomDiff = 0, easingFunction = 'li
     const scaleFactor = range / max;
 
     // scale the steps into the range and map them into the range from-to
-    return randomised.map(entry => util.round(from + (entry * scaleFactor), 4));
-}
-
-
-module.exports = scaledPrices;
+    return randomised.map(entry => round(from + (entry * scaleFactor)));
+};

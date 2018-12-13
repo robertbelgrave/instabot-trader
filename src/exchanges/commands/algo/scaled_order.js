@@ -56,6 +56,12 @@ module.exports = async (context, args) => {
         p.to = tmp;
     }
 
+    // check for from or to being below zero
+    if (p.from <= 0 || p.to <= 0) {
+        logger.results('Scaled order not placed, as price range goes below zero.');
+        return Promise.resolve([]);
+    }
+
     // Adjust the size to take into account available funds
     p.amount.value = await ex.support.scaledOrderSize(context, p);
     if (p.amount.value === 0) {
@@ -64,8 +70,10 @@ module.exports = async (context, args) => {
     }
 
     // Get an array of amounts
-    const amounts = scaledAmounts(p.orderCount, p.amount.value, p.varyAmount, ex.api.precision);
-    const prices = scaledPrices(p.orderCount, p.from, p.to, p.varyPrice, p.easing);
+    const roundAsset = asset => ex.roundAsset(asset);
+    const roundPrice = price => ex.roundPrice(price);
+    const amounts = scaledAmounts(p.orderCount, p.amount.value, p.varyAmount, roundAsset);
+    const prices = scaledPrices(p.orderCount, p.from, p.to, p.varyPrice, p.easing, roundPrice);
 
     logger.progress('Adjusted values based on Available Funds');
     logger.progress(p);
@@ -79,7 +87,8 @@ module.exports = async (context, args) => {
                 // Place the order
                 const order = await ex.api.limitOrder(symbol, amounts[i], prices[i], p.side, false);
                 ex.addToSession(session, p.tag, order);
-                logger.results(`Limit order placed (${p.side}) at ${prices[i]} for ${amounts[i]}.`);
+                const now = new Date();
+                logger.results(`Limit order placed at ${now.toTimeString()}. ${p.side} ${amounts[i]} at ${prices[i]}.`);
                 logger.dim(order);
                 return {
                     order,

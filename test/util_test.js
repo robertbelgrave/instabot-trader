@@ -79,4 +79,31 @@ describe('Util lib', () => {
 
         assert.isTrue(anyAreFloat);
     });
+
+    it('can round to significant figures', () => {
+        assert.equal(util.roundSignificantFigures(1, 1), 1);
+        assert.equal(util.roundSignificantFigures(1, 1), 1.0);
+        assert.equal(util.roundSignificantFigures(1.1, 1), 1.0);
+        assert.equal(util.roundSignificantFigures(1.1, 2), 1.1);
+
+        assert.equal(util.roundSignificantFigures(1.123456789, 1), 1);
+        assert.equal(util.roundSignificantFigures(1.123456789, 2), 1.1);
+        assert.equal(util.roundSignificantFigures(1.123456789, 3), 1.12);
+        assert.equal(util.roundSignificantFigures(1.123456789, 4), 1.123);
+        assert.equal(util.roundSignificantFigures(1.123456789, 5), 1.1235);
+        assert.equal(util.roundSignificantFigures(1.123456789, 6), 1.12346);
+        assert.equal(util.roundSignificantFigures(1.123456789, 7), 1.123457);
+
+        assert.equal(util.roundSignificantFigures(0.123456, 3), 0.123);
+        assert.equal(util.roundSignificantFigures(0.123456, 5), 0.12346);
+
+        assert.equal(util.roundSignificantFigures(0.000123456789, 5), 0.00012346);
+        assert.equal(util.roundSignificantFigures(0.000123456789, 2), 0.00012);
+
+        assert.equal(util.roundSignificantFigures(-0.000123456789, 5), -0.00012346);
+
+        assert.equal(util.roundSignificantFigures(1234.567890, 5), 1234.6);
+
+        assert.equal(util.roundSignificantFigures(0.0000879, 5), 0.0000879);
+    });
 });
