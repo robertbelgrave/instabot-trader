@@ -57,25 +57,31 @@ module.exports = async (context, args) => {
     p.endless = (p.endless.toLowerCase() === 'true');
     p.pingAmount = Math.max(parseFloat(p.pingAmount), 0);
     p.pongAmount = Math.max(parseFloat(p.pongAmount), 0);
+    p.orderCount = Math.min(parseInt(p.orderCount, 10), 100);
 
-    // prefer ping and pong amounts to Amount or Position
-    if ((p.pingAmount > 0) && (p.pongAmount > 0)) {
-        p.amount = String(p.pingAmount * p.orderCount);
-    } else {
+    // If ping and pong amounts are not given, work them out from amount or position
+    if ((p.pingAmount === 0) && (p.pongAmount === 0)) {
         const modifiedPosition = await ex.positionToAmount(symbol, p.position, p.side, p.amount);
-        const orderCount = Math.max(Math.min(parseInt(p.orderCount, 10), 100), 2);
-        p.pingAmount = p.pongAmount = modifiedPosition.amount.value / orderCount;
+        p.pingAmount = p.pongAmount = ex.roundAsset(modifiedPosition.amount.value / p.orderCount);
     }
+
+    p.amount = String(ex.roundAsset(p.pingAmount * p.orderCount));
 
     // show a little progress
     logger.progress(`PING PONG ORDER - ${ex.name}`);
     logger.progress(p);
 
+    // zero orders means nothing to do
+    if (p.orderCount < 1) {
+        logger.results('Ping Pong order with orderCount of zero. Ignoring');
+        return;
+    }
+
     // step one - place a scaled order...
     const scaledOrderArgs = [
         { name: 'from', value: p.from, index: 0 },
         { name: 'to', value: p.to, index: 1 },
-        { name: 'orderCount', value: p.orderCount, index: 2 },
+        { name: 'orderCount', value: String(p.orderCount), index: 2 },
         { name: 'amount', value: p.amount, index: 3 },
         { name: 'side', value: p.side, index: 4 },
         { name: 'easing', value: p.easing, index: 5 },

@@ -29,16 +29,22 @@ module.exports = async (context, args) => {
     logger.progress(`SCALED ORDER - ${ex.name}`);
     logger.progress(p);
 
-    // get the order count as a number (clamped from 1 to 100)
-    p.orderCount = Math.max(Math.min(parseInt(p.orderCount, 10), 100), 2);
+    // get the order count as a number (clamped below 100)
+    p.orderCount = Math.min(parseInt(p.orderCount, 10), 100);
     p.varyAmount = ex.parsePercentage(p.varyAmount);
     p.varyPrice = ex.parsePercentage(p.varyPrice);
+
+    // zero orders means nothing to do
+    if (p.orderCount < 1) {
+        logger.results('Scaled order not placed, as order count is Zero.');
+        return [];
+    }
 
     // Figure out the size of each order
     const modifiedPosition = await ex.positionToAmount(symbol, p.position, p.side, p.amount);
     if (modifiedPosition.amount.value === 0) {
         logger.results('Scaled order not placed, as order size is Zero.');
-        return Promise.resolve([]);
+        return [];
     }
 
     // So we now know the desired position size and direction
@@ -59,14 +65,14 @@ module.exports = async (context, args) => {
     // check for from or to being below zero
     if (p.from <= 0 || p.to <= 0) {
         logger.results('Scaled order not placed, as price range goes below zero.');
-        return Promise.resolve([]);
+        return [];
     }
 
     // Adjust the size to take into account available funds
     p.amount.value = await ex.support.scaledOrderSize(context, p);
     if (p.amount.value === 0) {
         logger.results('Scaled order would result in trying to place orders below min order size. Ignoring.');
-        return Promise.resolve([]);
+        return [];
     }
 
     // Get an array of amounts
