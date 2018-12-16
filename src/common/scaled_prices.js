@@ -17,6 +17,10 @@ module.exports = (orderCount, from, to, randomDiff = 0, easingFunction = 'linear
         return [];
     }
 
+    if (orderCount < 2) {
+        return [from];
+    }
+
     const range = to - from;
 
     // Create an array with a progress from 0 to 1

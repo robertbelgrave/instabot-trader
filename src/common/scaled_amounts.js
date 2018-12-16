@@ -14,6 +14,10 @@ module.exports = (orderCount, totalSpend, randomDiff, round) => {
         return [];
     }
 
+    if (orderCount < 2) {
+        return [totalSpend];
+    }
+
     // Create an array with a value of 1 for each order
     const sizes = Array(...Array(orderCount)).map(() => 1);
 
