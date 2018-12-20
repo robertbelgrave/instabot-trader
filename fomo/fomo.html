@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+<!--
+
+IMPORTANT - Change the URL in the JS code near the bottom of the file to
+contain the URL of your bot instance.
+
+-->
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Fomo</title>
+
+    <!-- CSS Framework docs: https://bulma.io/documentation/ -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.7.2/css/bulma.min.css">
+    <link rel="stylesheet" href="bulma-switch.min.css">
+
+    <link rel="shortcut icon" type="image/x-icon" href="favicon.ico">
+</head>
+<body>
+
+<div class="is-pulled-left">
+    <a href="https://instabot42.github.io/">Instabot Trader Docs</a>
+</div>
+
+<div class="field is-pulled-right" style="padding: 5px;">
+    <label for="switchExample"><strong>Debug</strong></label>
+    <input id="switchExample" type="checkbox" name="switchExample" class="switch" checked="checked">
+    <label for="switchExample"><strong>Live</strong></label>
+</div>
+
+
+<section class="section" style="padding-top:0;">
+    <div class="container">
+        <div class="tabs is-centered is-large">
+            <ul>
+                <li id="waiting" class="is-active"><a>Waiting</a></li>
+                <li id="position"><a>Position</a></li>
+                <li id="fomo"><a>FOMO</a></li>
+                <li id="mm"><a>Market Maker</a></li>
+                <li id="reports" ><a>Reports</a></li>
+                <li id="manual" ><a>Manual Commands</a></li>
+            </ul>
+        </div>
+        <div class="container">
+
+
+            <!-- WAITING TAB CONTENTS -->
+
+            <div id="waiting-content">
+                <div class="columns">
+                    <div class="column is-two-fifths">
+                        <!-- Twitter -->
+                        <a class="twitter-timeline" href="https://twitter.com/instabot42/lists/crypto?ref_src=twsrc%5Etfw">A Twitter List by instabot42</a>
+                        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+                    </div>
+                    <div class="column">
+                        <!-- TradingView Widget BEGIN -->
+                        <div class="tradingview-widget-container" style="max-widffth:600px; margin: 0 auto;">
+                            <div class="tradingview-widget-container__widget"></div>
+                            <div class="tradingview-widget-copyright"><a href="https://uk.tradingview.com/markets/currencies/" rel="noopener" target="_blank"><span class="blue-text">Crypto</span></a> by TradingView</div>
+                            <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-market-quotes.js" async>
+{
+    "width": "100%",
+    "height": "450",
+    "symbolsGroups": [
+        {
+            "originalName": "Forex",
+            "symbols": [
+                {
+                    "name": "BITFINEX:BTCUSD",
+                    "displayName": "Bitcoin"
+                },
+                {
+                    "name": "COINBASE:BTCUSD",
+                    "displayName": "BTC Coinbase"
+                },
+                {
+                    "name": "BITFINEX:ETHUSD",
+                    "displayName": "Ethereum"
+                },
+                {
+                    "name": "BITFINEX:XRPUSD",
+                    "displayName": "Ripple"
+                },
+                {
+                    "name": "BITFINEX:LTCUSD",
+                    "displayName": "Litecoin"
+                },
+                {
+                    "name": "BITFINEX:EOSUSD",
+                    "displayName": "EOS"
+                },
+                {
+                    "name": "BITFINEX:XMRUSD",
+                    "displayName": "Monero"
+                },
+                {
+                    "name": "BINANCE:BCHABCUSDT",
+                    "displayName": "Bcash ABC"
+                },
+                {
+                    "name": "BINANCE:BCHSVUSDT",
+                    "displayName": "Bcash SV"
+                }
+            ],
+            "name": "Crypto"
+        }
+    ],
+    "locale": "uk"
+}
+                            </script>
+                        </div>
+                        <!-- TradingView Widget END -->
+
+                        <!-- TradingView Widget BEGIN -->
+                        <div class="tradingview-widget-container">
+                            <div id="tv-medium-widget"></div>
+                            <div class="tradingview-widget-copyright">TradingView</div>
+                            <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+                            <script type="text/javascript">
+                                new TradingView.MediumWidget({
+                                    "container_id": "tv-medium-widget",
+                                    "symbols": [
+                                        [ "BTC", "BITFINEX:BTCUSD|1d" ],
+                                        [ "ETH", "BITFINEX:ETHUSD|1d" ],
+                                        [ "LTC",  "BITFINEX:LTCUSD|1d" ],
+                                        [ "XMR", "BITFINEX:XMRUSD|1d" ]
+                                    ],
+                                    "greyText": "Quotes by",
+                                    "gridLineColor": "#e9e9ea",
+                                    "fontColor": "#83888D",
+                                    "underLineColor": "#dbeffb",
+                                    "trendLineColor": "#4bafe9",
+                                    "width": "100%",
+                                    "height": "450px",
+                                    "locale": "uk"
+                                });
+                            </script>
+                        </div>
+                        <!-- TradingView Widget END -->
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- POSITION TAB CONTENTS -->
+
+            <div id="position-content" class="is-hidden">
+                <h2 class="title is-2 has-text-centered">Getting into Position</h2>
+                <h4 class="subtitle is-4 has-text-centered">Longer term stuff</h4>
+                <div class="field level">
+                    <div class="control level-item">
+                        <div class="select is-info">
+                            <select id="position-instrument" class="exchange-picker">
+                                <option selected="selected" value="deribit:BTC-PERPETUAL">Deribit Perps</option>
+                                <option value="deribit:BTC-28DEC18">Deribit Dec18 Futures</option>
+                                <option value="deribit:BTC-29MAR19">Deribit Mar19 Futures</option>
+                                <option value="bitfinex:BTCUSD">Bitfinex BTCUSD Spot</option>
+                                <option value="coinbase:BTC-EUR">Coinbase Pro BTC-EUR Spot</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="columns">
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">
+                                    Enter a position
+                                </p>
+                                <p class="subtitle">
+                                    As cheaply as possible.
+                                </p>
+                                <div class="content">
+                                    <form>
+                                        <input type="hidden" name="exchange" value="" class="f-exchange">
+                                        <input type="hidden" name="instrument" value="" class="f-instrument">
+
+                                        <div class="field">
+                                            <label class="label">Target Position Size (in contracts)</label>
+                                            <div class="control">
+                                                <input name="position" class="input" type="text" value="5000">
+                                            </div>
+                                        </div>
+
+                                        <button class="trigger-action button is-medium is-success" data-action="deribit-std-long">Get F**king Long</button>
+                                        &nbsp;
+                                        <button class="trigger-action button is-medium is-danger" data-action="deribit-std-short">Short it!</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">
+                                    Massage Position
+                                </p>
+                                <p class="subtitle">
+                                    Add and remove from existing position
+                                </p>
+                                <div class="content">
+                                    <form>
+                                        <input type="hidden" name="exchange" value="" class="f-exchange">
+                                        <input type="hidden" name="instrument" value="" class="f-instrument">
+
+                                        <div class="field">
+                                            <label class="label">Amount (in contracts)</label>
+                                            <div class="control">
+                                                <input name="amount" class="input" type="text" value="500">
+                                            </div>
+                                        </div>
+
+                                        <button class="trigger-action button is-medium is-success" data-action="deribit-massage-add">Add</button>
+                                        &nbsp;
+                                        <button class="trigger-action button is-medium is-danger" data-action="deribit-massage-reduce">Reduce</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="columns">
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">
+                                    Iceberg Order
+                                </p>
+                                <p class="subtitle">
+                                    BTFD
+                                </p>
+                                <div class="content">
+                                    <form>
+                                        <input type="hidden" name="exchange" value="" class="f-exchange">
+                                        <input type="hidden" name="instrument" value="" class="f-instrument">
+
+                                        <div class="columns">
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Total size</label>
+                                                    <div class="control">
+                                                        <input name="totalAmount" class="input" type="text" value="1000">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="column">
+
+                                                <div class="field">
+                                                    <label class="label">Average size</label>
+                                                    <div class="control">
+                                                        <input name="averageAmount" class="input" type="text" value="25">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="columns">
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Variance (offset as %)</label>
+                                                    <div class="control">
+                                                        <input name="variance" class="input" type="text" value="0.02%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Limit Price (buy below, sell above)</label>
+                                                    <div class="control">
+                                                        <input name="limitPrice" class="input" type="text" value="">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="field">
+                                            <label class="label">Time limit on order</label>
+                                            <div class="control">
+                                                <input name="timeLimit" class="input" type="text" value="4h">
+                                            </div>
+                                        </div>
+
+                                        <button class="trigger-action button is-medium is-success" data-action="iceberg-buy">Buy</button>
+                                        &nbsp;
+                                        <button class="trigger-action button is-medium is-danger" data-action="iceberg-sell">Sell</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column"></div>
+                </div>
+            </div>
+
+
+            <!-- FOMO TAB CONTENTS -->
+
+            <div id="fomo-content" class="is-hidden">
+                <h2 class="title is-2 has-text-centered">FOMO</h2>
+                <h4 class="subtitle is-4 has-text-centered">In and out fast</h4>
+                <div class="field level">
+                    <div class="control level-item">
+                        <div class="select is-info">
+                            <select id="fomo-instrument" class="exchange-picker">
+                                <option selected="selected" value="deribit:BTC-PERPETUAL">Deribit Perps</option>
+                                <option value="deribit:BTC-28DEC18">Deribit Dec18 Futures</option>
+                                <option value="deribit:BTC-29MAR19">Deribit Mar19 Futures</option>
+                                <option value="bitfinex:BTCUSD">Bitfinex BTCUSD Spot</option>
+                                <option value="coinbase:BTC-EUR">Coinbase Pro BTC-EUR Spot</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="columns">
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">Fixed Position</p>
+                                <p class="subtitle">Market orders to a target position size</p>
+                                <div class="content">
+                                    <form>
+                                        <input type="hidden" name="exchange" value="" class="f-exchange">
+                                        <input type="hidden" name="instrument" value="" class="f-instrument">
+
+                                        <div class="field">
+                                            <label class="label">Amount (units vary)</label>
+                                            <div class="control">
+                                                <input name="amount" class="input" type="text" value="500">
+                                            </div>
+                                        </div>
+
+                                        <button class="trigger-action button is-medium is-success" data-action="fomo-deribit-long">Long</button>
+                                        &nbsp;
+                                        <button class="trigger-action button is-medium is-info" data-action="fomo-deribit-flat">Flat</button>
+                                        &nbsp;
+                                        <button class="trigger-action button is-medium is-danger" data-action="fomo-deribit-short">Short</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">
+                                    Abort
+                                </p>
+                                <p class="subtitle">
+                                    Get out fast
+                                </p>
+                                <div class="content ">
+                                    <form>
+                                        <input type="hidden" name="exchange" value="" class="f-exchange">
+                                        <input type="hidden" name="instrument" value="" class="f-instrument">
+
+                                        <p>Cancel all and close open positions</p>
+                                        <button class="trigger-action button is-medium is-danger" data-action="fomo-deribit-exit-all">Exit all crypto markets</button>
+                                        <br><br>
+                                        <p>or just cancel all orders</p>
+                                        <button class="trigger-action button is-medium is-danger" data-action="cancel-all">Cancel all open orders</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">
+                                    Adjust Position
+                                </p>
+                                <p class="subtitle">
+                                    Market buy/sell. Ignores current position.
+                                </p>
+                                <div class="content">
+                                    <form>
+                                        <input type="hidden" name="exchange" value="" class="f-exchange">
+                                        <input type="hidden" name="instrument" value="" class="f-instrument">
+                                        <div class="field">
+                                            <label class="label">Amount (units vary)</label>
+                                            <div class="control">
+                                                <input name="amount" class="input" type="text" value="500">
+                                            </div>
+                                        </div>
+
+                                        <button class="trigger-action button is-medium is-success" data-action="fomo-deribit-add-long">Market Buy</button>
+                                    &nbsp;
+                                        <button class="trigger-action button is-medium is-danger" data-action="fomo-deribit-add-short">Market Sell</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="columns">
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">Scaled Order</p>
+                                <p class="subtitle">No market orders here - limit orders, all the way down</p>
+                                <div class="content">
+                                    <form>
+                                        <input type="hidden" name="exchange" value="" class="f-exchange">
+                                        <input type="hidden" name="instrument" value="" class="f-instrument">
+
+                                        <div class="columns">
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">From (offset from current)</label>
+                                                    <div class="control">
+                                                        <input name="from" class="input" type="text" value="0">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">To (offset from current)</label>
+                                                    <div class="control">
+                                                        <input name="to" class="input" type="text" value="50">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="columns">
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Order count</label>
+                                                    <div class="control">
+                                                        <input name="orderCount" class="input" type="text" value="20">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Amount (units vary)</label>
+                                                    <div class="control">
+                                                        <input name="amount" class="input" type="text" value="100">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="columns">
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Vary Amount</label>
+                                                    <div class="control">
+                                                        <input name="varyAmount" class="input" type="text" value="10%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Vary Price</label>
+                                                    <div class="control">
+                                                        <input name="varyPrice" class="input" type="text" value="0%">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="field">
+                                            <label class="label">How to spread the orders out</label>
+                                            <div class="control">
+                                                <div class="select">
+                                                    <select name="easing">
+                                                        <option selected="selected" value="linear">Evenly spread (linear)</option>
+                                                        <option value="ease-in">Bias towards From (ease in)</option>
+                                                        <option value="ease-out">Bias towards To (ease out)</option>
+                                                        <option value="ease-in-out">Bias away from the middle of the range (ease in and out)</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button class="trigger-action button is-medium is-success" data-action="fomo-scaled-order-buy">Buy</button>
+                                        &nbsp;
+                                        <button class="trigger-action button is-medium is-danger" data-action="fomo-scaled-order-sell">Sell</button>
+                                    </form>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">Timed Orders</p>
+                                <p class="subtitle">Multiple market orders over a period of time</p>
+                                <div class="content">
+                                    <form>
+                                        <input type="hidden" name="exchange" value="" class="f-exchange">
+                                        <input type="hidden" name="instrument" value="" class="f-instrument">
+
+                                        <div class="columns">
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Order count</label>
+                                                    <div class="control">
+                                                        <input name="orderCount" class="input" type="text" value="20">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Total Duration (eg 60, 60s, 10m, 1h)</label>
+                                                    <div class="control">
+                                                        <input name="duration" class="input" type="text" value="10m">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="field">
+                                            <label class="label">Amount (units vary)</label>
+                                            <div class="control">
+                                                <input name="amount" class="input" type="text" value="100">
+                                            </div>
+                                        </div>
+
+                                        <button class="trigger-action button is-medium is-success" data-action="fomo-timed-order-buy">Buy</button>
+                                        &nbsp;
+                                        <button class="trigger-action button is-medium is-danger" data-action="fomo-timed-order-sell">Sell</button>
+                                    </form>
+
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+
+
+
+
+            <!-- Market Maker TAB CONTENTS -->
+
+            <div id="mm-content" class="is-hidden">
+                <h2 class="title is-2 has-text-centered">Market Maker</h2>
+                <h4 class="subtitle is-4 has-text-centered">Print money</h4>
+                <div class="field level">
+                    <div class="control level-item">
+                        <div class="select is-info">
+                            <select id="fomo-instrument" class="exchange-picker">
+                                <option selected="selected" value="deribit:BTC-PERPETUAL">Deribit Perps</option>
+                                <option value="deribit:BTC-28DEC18">Deribit Dec18 Futures</option>
+                                <option value="deribit:BTC-29MAR19">Deribit Mar19 Futures</option>
+                                <option value="bitfinex:BTCUSD">Bitfinex BTCUSD Spot</option>
+                                <option value="coinbase:BTC-EUR">Coinbase Pro BTC-EUR Spot</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="columns">
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">Start market maker</p>
+                                <p class="subtitle">Double ping pong (Examples based on BTCUSD)<br>
+                                    <span id="mm-summary" >Totals: ...</span>
+                                </p>
+
+                                <div class="content">
+                                    <form>
+                                        <input type="hidden" name="exchange" value="" class="f-exchange">
+                                        <input type="hidden" name="instrument" value="" class="f-instrument">
+
+                                        <input type="hidden" name="bidFrom" id="bidFrom" value="0">
+                                        <input type="hidden" name="bidTo" id="bidTo" value="0">
+                                        <input type="hidden" name="bidAmount" id="bidAmount" value="0">
+                                        <input type="hidden" name="askFrom" id="askFrom" value="0">
+                                        <input type="hidden" name="askTo" id="askTo" value="0">
+                                        <input type="hidden" name="askAmount" id="askAmount" value="0">
+
+                                        <input type="hidden" name="showAsks" id="showAsks" value="true">
+                                        <input type="hidden" name="showBids" id="showBids" value="true">
+
+                                        <div class="columns">
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Each Bid Amount (BTC)</label>
+                                                    <div class="control">
+                                                        <input name="bidSize" class="input mm-bid-amount mm-field" type="text" value="0.1">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Each Ask Amount (BTC)</label>
+                                                    <div class="control">
+                                                        <input name="askSize" class="input mm-ask-amount mm-field" type="text" value="0.1">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="columns">
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Bid step (gap between bids, USD)</label>
+                                                    <div class="control">
+                                                        <input name="bidStep" class="input mm-bid-step mm-field" type="text" value="5">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Ask step (gap between asks, USD)</label>
+                                                    <div class="control">
+                                                        <input name="askStep" class="input mm-ask-step mm-field" type="text" value="5">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="columns">
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Bid Count</label>
+                                                    <div class="control">
+                                                        <input name="bidCount" class="input mm-bid-count mm-field" type="text" value="30">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Ask Count</label>
+                                                    <div class="control">
+                                                        <input name="askCount" class="input mm-ask-count mm-field" type="text" value="30">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="columns">
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Spread (USD)</label>
+                                                    <div class="control">
+                                                        <input name="spread" class="input mm-spread mm-field" type="text" value="26">
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">How to spread the orders out</label>
+                                                    <div class="control">
+                                                        <div class="select">
+                                                            <select name="easing">
+                                                                <option selected="selected" value="linear">Evenly spread (linear)</option>
+                                                                <option value="ease-in">More orders close to start price (ease in)</option>
+                                                                <option value="ease-out">More orders at edge of range (ease out)</option>
+                                                                <option value="ease-in-out">Bias away from the middle of the range (ease in and out)</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button class="trigger-action button is-medium is-success" data-action="market-maker">Execute</button>
+                                        &nbsp;
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+
+
+
+
+            <!-- REPORTS TAB CONTENTS -->
+
+            <div class="is-hidden" id="reports-content">
+                <h2 class="title is-2 has-text-centered">Alerts, Balances and Reports</h2>
+                <h4 class="subtitle is-4 has-text-centered">Across all exchanges</h4>
+
+                <div class="columns">
+
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">
+                                    Deribit
+                                </p>
+                                <p class="subtitle">
+                                    BTC-PERPETUAL &amp; BTC-28DEC18
+                                </p>
+                                <div class="content has-text-centered">
+                                    <button class="trigger-action button is-medium is-info" data-action="fomo-deribit-balance">Deribit Balance</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">
+                                    Coinbase Pro
+                                </p>
+                                <p class="subtitle">
+                                    BTC-EUR
+                                </p>
+                                <div class="content has-text-centered">
+                                    <button class="trigger-action button is-medium is-info" data-action="fomo-coinbase-balance">Coinbase Balance</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">
+                                    Bitfinex
+                                </p>
+                                <p class="subtitle">
+                                    BTCUSD
+                                </p>
+                                <div class="content has-text-centered">
+                                    <button class="trigger-action button is-medium is-info" data-action="fomo-bitfinex-balance">Bitfinex Balance</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+
+            <!-- MANUAL TAB CONTENTS -->
+
+            <div class="is-hidden" id="manual-content">
+                <h2 class="title is-2 has-text-centered">Write custom commands</h2>
+                <h4 class="subtitle is-4 has-text-centered">anything goes</h4>
+
+                <div class="columns">
+
+                    <div class="column">
+                        <div class="card">
+                            <div class="card-content">
+                                <p class="title">
+                                    Commands
+                                </p>
+                                <p class="subtitle">
+                                    Any valid message
+                                </p>
+                                <div class="content">
+                                    <textarea id="manual-command-text" class="textarea" placeholder="10 lines of textarea" rows="10">
+BTC-PERPETUAL or BTC-28DEC18
+deribit(BTC-PERPETUAL) {
+    wait(5s);
+}
+                                    </textarea>
+                                    <br>
+                                    <button class="manual-command button is-medium is-info">Send...</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+
+<section class="section" style="padding-top:0;">
+    <div class="container">
+        <div class="columns">
+            <div class="column">
+                <h2 class="title is-2">Command History</h2>
+                <pre><code id="recent-commands"></code></pre>
+            </div>
+        </div>
+    </div>
+</section>
+
+
+
+<div class="is-hidden">
+
+
+    <!--
+
+    POSITION ORDERS
+    ===============
+
+    -->
+
+    <!--  Entering a long position -->
+    <div id="deribit-std-long">
+        Going {{position}} long on {{instrument}}
+        {{exchange}}({{instrument}}) {
+            scaledOrder(from=0, to=25, orderCount=25, position={{position}}, tag=firstRound);
+
+            wait(30m);
+            cancelOrders(tagged, firstRound); wait(5s);
+            scaledOrder(from=0, to=15, orderCount=25, position={{position}}, tag=secondRound);
+
+            wait(30m);
+            cancelOrders(tagged, secondRound); wait(5s);
+            marketOrder(position={{position}});
+
+            wait(5s);
+            balance();
+        }
+    </div>
+
+    <!--  Entering a Short position -->
+    <div id="deribit-std-short">
+        Going {{position}} Short on {{instrument}}
+        {{exchange}}({{instrument}}) {
+            scaledOrder(from=0, to=25, orderCount=25, position=-{{position}}, tag=firstRound);
+
+            wait(30m);
+            cancelOrders(tagged, firstRound); wait(5s);
+            scaledOrder(from=0, to=15, orderCount=25, position=-{{position}}, tag=secondRound);
+
+            wait(30m);
+            cancelOrders(tagged, secondRound); wait(5s);
+            marketOrder(position=-{{position}});
+
+            wait(5s);
+            balance();
+        }
+    </div>
+
+
+    <!--  Add to position -->
+    <div id="deribit-massage-add">
+        Adding to position {{amount}} on {{instrument}}
+        {{exchange}}({{instrument}}) {
+            limitOrder(side=buy, amount={{amount}}, offset=1);
+        }
+    </div>
+
+    <!--  reduce position -->
+    <div id="deribit-massage-reduce">
+        Reducing Position {{amount}} on {{instrument}}.
+        {{exchange}}({{instrument}}) {
+            limitOrder(side=sell, amount={{amount}}, offset=1);
+        }
+    </div>
+
+
+    <!-- Iceberg Buy -->
+    <div id="iceberg-buy">
+        Placing Iceberg to buy {{totalAmount}} below {{limitPrice}} on {{instrument}}.
+        {{exchange}}({{instrument}}) {
+            icebergOrder(side=buy, totalAmount={{totalAmount}}, averageAmount={{averageAmount}}, variance={{variance}}, limitPrice={{limitPrice}}, timeLimit={{timeLimit}});
+        }
+    </div>
+
+    <!-- Iceberg Sell -->
+    <div id="iceberg-sell">
+        Placing Iceberg to sell {{totalAmount}} above {{limitPrice}} on {{instrument}}.
+        {{exchange}}({{instrument}}) {
+            icebergOrder(side=sell, totalAmount={{totalAmount}}, averageAmount={{averageAmount}}, variance={{variance}}, limitPrice={{limitPrice}}, timeLimit={{timeLimit}});
+        }
+    </div>
+
+
+    <!--
+
+    FOMO ORDERS
+    ===============
+
+    -->
+
+    <!-- Short -->
+    <div id="fomo-deribit-short">
+        FOMO Short to position of -{{amount}}
+        {{exchange}}({{instrument}}) {
+            marketOrder(position=-{{amount}});
+        }
+    </div>
+
+    <!-- Long -->
+    <div id="fomo-deribit-long">
+        FOMO Long to position of {{amount}}
+        {{exchange}}({{instrument}}) {
+            marketOrder(position={{amount}});
+        }
+    </div>
+
+    <!-- Flat -->
+    <div id="fomo-deribit-flat">
+        Close open FOMO positions
+        {{exchange}}({{instrument}}) {
+            marketOrder(position=0);
+        }
+    </div>
+
+
+    <!-- FOMO Close All-->
+    <div id="fomo-deribit-exit-all">
+        FOMO Exit all open positions and cancel all orders
+        {{exchange}}({{instrument}}) {
+            cancelOrders(all);
+            marketOrder(position=0);
+        }
+    </div>
+
+    <!-- FOMO Close All-->
+    <div id="cancel-all">
+        Cancel all open orders
+        {{exchange}}({{instrument}}) {
+            cancelOrders(all);
+        }
+    </div>
+
+
+
+
+    <!-- FOMO add to long position -->
+    <div id="fomo-deribit-add-long">
+        FOMO buy {{amount}} contracts
+        {{exchange}}({{instrument}}) {
+            marketOrder(side=buy, amount={{amount}});
+        }
+    </div>
+
+    <!-- FOMO add to short -->
+    <div id="fomo-deribit-add-short">
+        FOMO sell {{amount}} contracts
+        {{exchange}}({{instrument}}) {
+            marketOrder(side=sell, amount={{amount}});
+        }
+    </div>
+
+    <!-- FOMO Scaled Order Buy -->
+    <div id="fomo-scaled-order-buy">
+        FOMO with a Scaled order
+        {{exchange}}({{instrument}}) {
+          scaledOrder(from={{from}}, to={{to}}, orderCount={{orderCount}}, side=buy, amount={{amount}}, easing={{easing}}, varyAmount={{varyAmount}}, varyPrice={{varyPrice}});
+        }
+    </div>
+
+    <!-- FOMO Scaled Order Sell-->
+    <div id="fomo-scaled-order-sell">
+        FOMO with a Scaled order
+        {{exchange}}({{instrument}}) {
+        scaledOrder(from={{from}}, to={{to}}, orderCount={{orderCount}}, side=sell, amount={{amount}}, easing={{easing}}, varyAmount={{varyAmount}}, varyPrice={{varyPrice}});
+        }
+    </div>
+
+    <!-- FOMO Timed Order -->
+    <div id="fomo-timed-order-buy">
+        FOMO with a Timed order
+        {{exchange}}({{instrument}}) {
+          steppedMarketOrder(orderCount={{orderCount}}, duration={{duration}}, side=buy, amount={{amount}});
+        }
+    </div>
+
+    <div id="fomo-timed-order-sell">
+        FOMO with a Timed order
+        {{exchange}}({{instrument}}) {
+        steppedMarketOrder(orderCount={{orderCount}}, duration={{duration}}, side=sell, amount={{amount}});
+        }
+    </div>
+
+
+    <!--
+
+    Market Maker Commands
+    ===============
+
+    -->
+    <div id="market-maker">
+        {{#showBids}}
+        Market Maker Bids
+        {{exchange}}({{instrument}}) {
+            pingPongOrder(from={{bidFrom}}, to={{bidTo}}, orderCount={{bidCount}}, side=buy, easing={{easing}}, pingAmount={{bidSize}}, pongAmount={{askSize}}, pongDistance={{spread}}, endless=true, tag=mm);
+        }
+        {{/showBids}}
+        {{#showAsks}}
+        Market Maker Asks
+        {{exchange}}({{instrument}}) {
+            pingPongOrder(from={{askFrom}}, to={{askTo}}, orderCount={{askCount}}, side=sell, easing={{easing}}, pingAmount={{askSize}}, pongAmount={{bidSize}}, pongDistance={{spread}}, endless=true, tag=mm);
+        }
+        {{/showAsks}}
+    </div>
+
+
+    <!--
+
+    BALANCE COMMANDS
+    ===============
+
+    -->
+
+    <!-- Deribit Balance -->
+    <div id="fomo-deribit-balance">
+        deribit(BTC-PERPETUAL) { balance() }
+        deribit(BTC-28DEC18) { balance() }
+    </div>
+
+    <!-- Coinbase Balance -->
+    <div id="fomo-coinbase-balance">
+        coinbase(BTC-EUR) { balance() }
+    </div>
+
+    <!-- Bitfinex Balance -->
+    <div id="fomo-bitfinex-balance">
+        bitfinex(BTCUSD) { balance() }
+    </div>
+</div>
+
+<div class="notification is-success is-hidden" style="width:400px; z-index:2; position: absolute; top:10px; left: 10px;">
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+<script src="jquery.mustache.js"></script>
+
+
+<!--
+
+**************************************
+**************************************
+
+Change liveEndpoint below to contain the URL of you instance of Instabot Trader
+
+**************************************
+**************************************
+
+-->
+<script>
+    $( document ).ready(function() {
+
+        // CHANGE THIS LINE HERE...
+        const liveEndpoint = "http://locahost:3000/trade";
+        let endpoint = liveEndpoint;
+
+        // Tab switcher
+        $(".tabs li a").on('click', function(el) {
+            $(".tabs li").removeClass("is-active");
+            const $tab = $(this).parent();
+            $tab.addClass("is-active");
+
+            const $content = $("#" + $tab.attr('id') + "-content");
+            $content.parent().children().addClass('is-hidden');
+            $content.removeClass('is-hidden');
+
+        });
+
+        function sendMessage(msg) {
+            logCommand(msg);
+            const $notify = $(".notification");
+
+            if (!endpoint) {
+                console.log('Debug mode - not sending command');
+                return;
+            }
+
+            $.ajax({
+                type: "POST",
+                url: endpoint,
+                data: {
+                    message: msg
+                },
+                success: function() {
+                    $notify.text(`Message sent: ${msg}`);
+                    $notify.hide().removeClass('is-hidden is-danger').addClass('is-success');
+                    $notify.slideDown().delay(2000).slideUp();
+                },
+                error: function () {
+                    $notify.text(`Error sending request: ${msg}`);
+                    $notify.hide().removeClass('is-hidden is-success').addClass('is-danger');
+                    $notify.slideDown().delay(2000).slideUp();
+                }
+            });
+        }
+
+        function updateEndpoint() {
+            if ($("#switchExample").prop('checked')) {
+                console.log('Switching to production endpoint');
+                endpoint = liveEndpoint;
+            } else {
+                console.log('Switching to dev endpoint');
+                endpoint = null;
+            }
+        }
+
+        function logCommand(cmd) {
+            const code = $("#recent-commands");
+            const now = new Date();
+            const debug = endpoint ? '' : 'DEBUG MODE - Command not sent\n';
+            code.text(`${now}\n${debug}${cmd}\n\n${code.text()}`);
+        }
+
+        // Handle clicks on actions
+        $("form").on('submit', function() {
+            // Stop all the forms from submitting.
+            return false;
+        });
+
+        function mapValue(val) {
+            if (val === 'true') return true;
+            if (val === 'false') return false;
+            return val;
+        }
+
+        $(".trigger-action").on('click', function (el) {
+            const $form = $(this).closest("form");
+            const formData = $form.serializeArray();
+            const props = formData.reduce(function(res, item) {
+                res[item.name] = mapValue(item.value);
+                return res;
+            }, {});
+
+            const message = Mustache.render($("#" + $(this).data('action')).text(), props);
+            sendMessage(message);
+        });
+
+        $(".manual-command").on('click', function (el) {
+            sendMessage($("#manual-command-text").val());
+        });
+
+        $("#switchExample").on('change', function() { updateEndpoint(); });
+
+        function updateFomoInstrument(src) {
+            const val = src.val();
+            const parts = val.split(':');
+            const exchange = parts[0];
+            const instrument = parts[1];
+            $(".f-instrument").val(instrument);
+            $(".f-exchange").val(exchange);
+            $(".exchange-picker").val(val);
+        }
+
+        updateFomoInstrument($("#fomo-instrument"));
+
+        $(".exchange-picker").on('change', function() { updateFomoInstrument($(this)); });
+
+
+        function decimalAdjust(type, value, exp) {
+            // If the exp is undefined or zero...
+            if (typeof exp === 'undefined' || +exp === 0) {
+                return Math[type](value);
+            }
+
+            value = +value;
+            exp = +exp;
+
+            // If the value is not a number or the exp is not an integer...
+            if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
+                return NaN;
+            }
+
+            // Shift
+            value = value.toString().split('e');
+            value = Math[type](+(`${value[0]}e${value[1] ? (+value[1] + exp) : exp}`));
+
+            // Shift back
+            value = value.toString().split('e');
+            return +(`${value[0]}e${value[1] ? (+value[1] - exp) : -exp}`);
+        }
+
+        /**
+         * rounds a number to a given number of decimal places
+         * @param value
+         * @param exp
+         * @returns {*}
+         */
+        function round(value, exp) {
+            return decimalAdjust('round', value, exp);
+        }
+
+        function updateMarketMaker() {
+            console.log('change');
+
+            const spread = +$(".mm-spread").val();
+
+            const askAmount = +$(".mm-ask-amount").val();
+            const askStep = +$(".mm-ask-step").val();
+            const askCount = +$(".mm-ask-count").val();
+            const askFrom = (spread / 2);
+            const askTo = round(askFrom + ((askCount-1) * askStep), 4);
+
+            const bidAmount = +$(".mm-bid-amount").val();
+            const bidStep = +$(".mm-bid-step").val();
+            const bidCount = +$(".mm-bid-count").val();
+            const bidFrom = (spread / 2) + ((askStep + bidStep) / 2);
+            const bidTo = round(bidFrom + ((bidCount-1) * bidStep), 4);
+
+            const bidTotal = round(bidAmount * bidCount, 4);
+            const askTotal = round(askAmount * askCount, 4);
+            const total = round(bidTotal + askTotal, 4);
+
+            $("#bidFrom").val(bidFrom);
+            $("#bidTo").val(bidTo);
+            $("#bidAmount").val(bidTotal);
+
+            $("#askFrom").val(askFrom);
+            $("#askTo").val(askTo);
+            $("#askAmount").val(askTotal);
+
+            $("#showAsks").val(askCount > 0);
+            $("#showBids").val(bidCount > 0);
+
+            $("#mm-summary").text(`All bids: ${bidTotal}, All asks: ${askTotal}. Total: ${total}. Range: ${bidFrom} to ${bidTo} down and ${askFrom} to ${askTo} up`);
+        }
+
+        $(".mm-field").on('change', function() { updateMarketMaker() });
+        updateMarketMaker();
+    });
+</script>
+</body>
+</html>
