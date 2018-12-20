@@ -146,11 +146,8 @@ class TelegramNotifier {
                 logger.progress('Generic message from Telegram chat');
                 ctx.reply('Working on it 👍');
 
-                // execute the message and respond when everything is done
-                await Promise.all(this.exchangeManager.executeMessage(ctx.message.text, config.get('credentials')));
-
-                // let them know we are done
-                ctx.reply(`Done\n\`${ctx.message.text}\`\n🤞`, { parse_mode: 'Markdown' });
+                // Just push the messages off to be process (don't wait for them)
+                this.exchangeManager.executeMessage(ctx.message.text, config.get('credentials'));
             } else {
                 // Not from a known user, so log something
                 logger.progress('Telegram message from unknown user');
