@@ -656,21 +656,34 @@ contain the URL of your bot instance.
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div class="column"></div>
+                                        </div>
+
+                                        <div class="columns">
                                             <div class="column">
                                                 <div class="field">
-                                                    <label class="label">How to spread the orders out</label>
+                                                    <label class="label">Auto Balance Method</label>
                                                     <div class="control">
                                                         <div class="select">
-                                                            <select name="easing">
-                                                                <option selected="selected" value="linear">Evenly spread (linear)</option>
-                                                                <option value="ease-in">More orders close to start price (ease in)</option>
-                                                                <option value="ease-out">More orders at edge of range (ease out)</option>
-                                                                <option value="ease-in-out">Bias away from the middle of the range (ease in and out)</option>
+                                                            <select name="autoBalance">
+                                                                <option selected="selected" value="limit">Using limit orders (icebergs)</option>
+                                                                <option value="market">Using market orders</option>
+                                                                <option value="none">No auto balancing</option>
                                                             </select>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Auto balance percentage</label>
+                                                    <div class="control">
+                                                        <input name="autoBalanceAt" class="input mm-field" type="text" value="15">
+                                                    </div>
+                                                    <p>Start auto balancing orders when only this percentage of bids or asks remains</p>
+                                                </div>
+                                            </div>
+
                                         </div>
 
                                         <button class="trigger-action button is-medium is-success" data-action="market-maker">Execute</button>
@@ -992,18 +1005,12 @@ deribit(BTC-PERPETUAL) {
 
     -->
     <div id="market-maker">
-        {{#showBids}}
-        Market Maker Bids
         {{exchange}}({{instrument}}) {
-            pingPongOrder(from={{bidFrom}}, to={{bidTo}}, orderCount={{bidCount}}, side=buy, easing={{easing}}, pingAmount={{bidSize}}, pongAmount={{askSize}}, pongDistance={{spread}}, endless=true, tag=mm);
-        }
-        {{/showBids}}
-        {{#showAsks}}
-        Market Maker Asks
-        {{exchange}}({{instrument}}) {
-            pingPongOrder(from={{askFrom}}, to={{askTo}}, orderCount={{askCount}}, side=sell, easing={{easing}}, pingAmount={{askSize}}, pongAmount={{bidSize}}, pongDistance={{spread}}, endless=true, tag=mm);
-        }
-        {{/showAsks}}
+            marketMakerOrder(
+                bidAmount={{bidSize}}, bidStep={{bidStep}}, bidCount={{bidCount}},
+                askAmount={{askSize}}, askStep={{askStep}}, askCount={{askCount}},
+                spread={{spread}}, autoBalance={{autoBalance}}, autoBalanceAt={{autoBalanceAt}}
+        );
     </div>
 
 
