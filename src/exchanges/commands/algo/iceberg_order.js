@@ -35,6 +35,7 @@ module.exports = async (context, args) => {
 
     // bail out if there is basically nothing to do
     if ((p.limitPrice === 0) || (p.totalAmount === 0) || (p.averageAmount === 0)) {
+        logger.results('Nothing to do for iceberg order. ignoring');
         return;
     }
 
@@ -49,7 +50,7 @@ module.exports = async (context, args) => {
     let isSuspended = false;
 
     // The loop until there is nothing left to order
-    while (amountLeft > ex.minOrderSize) {
+    while (amountLeft >= ex.minOrderSize) {
         // have we reached the expiry time of the order
         if ((ex.isAlgoOrderCancelled(id)) || (p.timeLimit > 0 && expiryTime < Date.now())) {
             logger.progress('Iceberg order over expiry time or cancelled - stopping');
@@ -127,5 +128,6 @@ module.exports = async (context, args) => {
     }
 
     ex.endAlgoOrder(id);
+    logger.results('iceberg order complete');
 };
 
