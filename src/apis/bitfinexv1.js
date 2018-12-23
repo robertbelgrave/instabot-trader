@@ -95,7 +95,8 @@ class BitfinexApiv1 extends ApiInterface {
 
                     // look for connection reset error (we'll treat as overloaded)
                     if ((typeof error === 'object') && (error.code === 'ECONNRESET' || error.code === 'ETIMEDOUT' || error.code === 'ESOCKETTIMEDOUT')) {
-                        // treat this as a rate limit, so we'll wait and try again
+                        // treat this as a rate limit, so we'll wait and try again (though don't wait as long)
+                        actualDelay = 1;
                         return next(429, 0);
                     }
 
