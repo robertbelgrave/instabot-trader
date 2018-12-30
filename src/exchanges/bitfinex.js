@@ -43,7 +43,6 @@ class Bitfinex extends Exchange {
         // and using that to work out a min.
         const ticker = await this.api.ticker(symbol);
         this.minOrderSize = util.roundDown(25 / parseFloat(ticker.bid), 5);
-        logger.info(this.minOrderSize);
     }
 
     /**
