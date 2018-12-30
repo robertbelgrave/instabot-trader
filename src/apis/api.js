@@ -14,8 +14,15 @@ class ApiInterface {
      * @param symbol
      * @returns {Promise<void>}
      */
-    init(symbol) {
-        return Promise.resolve();
+    async init(symbol) {
+        // a chance for any start up stuff
+    }
+
+    /**
+     * Called before the API is destroyed
+     */
+    async terminate() {
+        // chance for any last minute shutdown stuff
     }
 
     /**
@@ -58,6 +65,19 @@ class ApiInterface {
     marketOrder(symbol, amount, side, isEverything) {
         return Promise.reject(new Error('Not implemented'));
     }
+
+    /**
+     * Place a stop market order
+     * @param symbol
+     * @param amount
+     * @param price
+     * @param side - buy or sell
+     * @param trigger
+     */
+    stopOrder(symbol, amount, price, side, trigger) {
+        return Promise.reject(new Error('Not implemented'));
+    }
+
 
     /**
      * Find active orders

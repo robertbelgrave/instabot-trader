@@ -64,7 +64,7 @@ class ExchangeManager {
             await newExchange.init(symbol);
         } catch (err) {
             logger.error(err);
-            this.closeExchange(newExchange);
+            await this.closeExchange(newExchange);
             return null;
         }
 
@@ -75,7 +75,7 @@ class ExchangeManager {
      * Close an exchange that we no longer need
      * @param exchange
      */
-    closeExchange(exchange) {
+    async closeExchange(exchange) {
         if (!exchange) { return; }
 
         const ex = this.findOpened(exchange.name, exchange.credentials);
@@ -83,7 +83,7 @@ class ExchangeManager {
 
         if (exchange.removeReference() <= 0) {
             // no more references, so we can remove this from the open exchange list
-            exchange.terminate();
+            await exchange.terminate();
             this.opened = this.opened.filter(item => item !== exchange);
         }
     }

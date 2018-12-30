@@ -1,6 +1,8 @@
 {
   "dependencies": {
     "async": "^2.5.0",
+    "bfx-api-node-models": "^1.0.6",
+    "bitfinex-api-node": "^2.0.4",
     "body-parser": "^1.18.2",
     "config": "^2.0.1",
     "express": "^4.16.2",
