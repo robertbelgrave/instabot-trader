@@ -42,7 +42,7 @@ describe('Exchange Manager tests', () => {
         const manager = new ExchangeManager([{ name: 'test', class: Exchange }]);
         const ex = await manager.openExchange('test', {});
         assert.lengthOf(manager.opened, 1);
-        manager.closeExchange(ex);
+        await manager.closeExchange(ex);
         assert.lengthOf(manager.opened, 0);
     });
 });
