@@ -45,5 +45,11 @@ module.exports = async (context, args) => {
     // Finally place the order
     const order = await ex.api.marketOrder(symbol, details.orderSize, side, details.isAllAvailable);
     logger.dim(order);
-    return order;
+    return {
+        order,
+        side,
+        price: null,
+        amount: details.orderSize,
+        units: '',
+    };
 };
