@@ -30,8 +30,8 @@ module.exports = async (context, args) => {
     p.varyAmount = ex.parsePercentage(p.varyAmount);
     if (p.duration < 1) p.duration = 1;
 
-    // Work out how long to wait between each order (in ms)
-    const timeGap = util.roundUp((ex.timeToSeconds(p.duration, 60) / p.orderCount), 0);
+    // Work out how long to wait between each order (in ms) - there are orderCount-1 gaps to wait in
+    const timeGap = util.roundUp((ex.timeToSeconds(p.duration, 60) / (p.orderCount - 1)), 0);
 
     // Figure out the size of each order
     const modifiedPosition = await ex.positionToAmount(symbol, p.position, p.side, p.amount);
@@ -67,16 +67,20 @@ module.exports = async (context, args) => {
 
             // Place the order
             try {
-                await ex.executeCommand(symbol, 'marketOrder', marketOrderArgs, session);
+                const order = await ex.executeCommand(symbol, 'marketOrder', marketOrderArgs, session);
+
+                // wait for a bit (unless this was the last order)
+                if (i < p.orderCount - 1) {
+                    await ex.waitSeconds(timeGap);
+                }
+
+                return order;
             } catch (err) {
                 logger.error(`Error placing a market order as part of a stepped order- ${err}`);
                 logger.error('Continuing to try and place the rest of the series...');
             }
 
-            // wait for a bit (unless this was the last order)
-            if (i < p.orderCount - 1) {
-                await ex.waitSeconds(timeGap);
-            }
-        }, err => (err ? reject(err) : resolve({})));
+            return null;
+        }, (err, orders) => (err ? reject(err) : resolve(orders)));
     });
 };
