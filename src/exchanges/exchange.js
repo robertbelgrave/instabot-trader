@@ -6,6 +6,7 @@ const icebergOrder = require('./commands/algo/iceberg_order');
 const scaledOrder = require('./commands/algo/scaled_order');
 const twapOrder = require('./commands/algo/twap_order');
 const pingPongOrder = require('./commands/algo/ping_pong');
+const marketMakerOrder = require('./commands/algo/market_maker');
 
 const limitOrder = require('./commands/orders/limit_order');
 const marketOrder = require('./commands/orders/market_order');
@@ -57,6 +58,7 @@ class Exchange {
             scaledOrder,
             twapOrder,
             pingPongOrder,
+            marketMakerOrder,
             steppedMarketOrder: twapOrder,  // duplicate using legacy name
             accDisOrder: icebergOrder,      // duplicate for common names
 
@@ -73,7 +75,7 @@ class Exchange {
         };
 
         this.commandWhiteList = [
-            'icebergOrder', 'scaledOrder', 'twapOrder', 'pingPongOrder',
+            'icebergOrder', 'scaledOrder', 'twapOrder', 'pingPongOrder', 'marketMakerOrder',
             'steppedMarketOrder', 'accDisOrder',
             'limitOrder', 'marketOrder', 'stopMarketOrder',
             'cancelOrders', 'wait', 'notify', 'balance'];

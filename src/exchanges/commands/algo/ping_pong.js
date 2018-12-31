@@ -1,30 +1,7 @@
-const uuid = require('uuid/v4');
 const logger = require('../../../common/logger').logger;
 const scaledOrder = require('./scaled_order');
+const pingPongLoop = require('./ping_pong_loop');
 
-
-/**
- * Once an order fills, place a new order on the other side of the book
- * @param context
- * @param p
- * @param original
- * @returns {Promise<*>}
- */
-async function placeOppositeOrder(context, p, original) {
-    // Need to place the 'pong' order on the other side of the book
-    const { ex = {}, symbol = '', session = '' } = context;
-    const side = original.side === 'buy' ? 'sell' : 'buy';
-    const price = original.side === 'buy' ? original.price + p.pongDistance : original.price - p.pongDistance;
-    const amount = p.side === original.side ? p.pongAmount : p.pingAmount;
-    const limitOrderArgs = [
-        { name: 'side', value: side, index: 0 },
-        { name: 'offset', value: `@${price}`, index: 1 },
-        { name: 'amount', value: `${amount}${original.units}`, index: 2 },
-        { name: 'tag', value: p.tag, index: 3 },
-    ];
-
-    return ex.executeCommand(symbol, 'limitOrder', limitOrderArgs, session);
-}
 
 /**
  * pingPongOrder
@@ -59,6 +36,11 @@ module.exports = async (context, args) => {
     p.pongAmount = Math.max(parseFloat(p.pongAmount), 0);
     p.orderCount = Math.min(parseInt(p.orderCount, 10), 100);
 
+    // Work out the step size
+    p.pingStep = Math.abs(parseFloat(p.to) - parseFloat(p.from)) / p.orderCount;
+    p.pongStep = Math.abs(parseFloat(p.to) - parseFloat(p.from)) / p.orderCount;
+    p.autoBalanceAt = 0.2;
+
     // If ping and pong amounts are not given, work them out from amount or position
     if ((p.pingAmount === 0) && (p.pongAmount === 0)) {
         const modifiedPosition = await ex.positionToAmount(symbol, p.position, p.side, p.amount);
@@ -89,71 +71,7 @@ module.exports = async (context, args) => {
     ];
     const orders = await scaledOrder(context, scaledOrderArgs);
 
-    // Call all these orders the pings and give them a starting age of 0 (increments each time they fill and swap sides)
-    let pongs = [];
-    let pings = orders
-        .filter(order => order.order !== null)
-        .map(order => ({ ...order, age: 0 }))
-        .sort((a, b) => (a.side === 'buy' ? b.price - a.price : a.price - b.price));
-
-    logger.progress(`Ping Pong initial orders placed - ${pings.length} orders`);
-    logger.progress('Waiting for orders to fill now');
-
-    // Log the algo order, so it can be cancelled
-    const id = uuid();
-    if (pings.length) ex.startAlgoOrder(id, pings[0].side, session, p.tag);
-
-    // now we have to wait for the pings to be filled
-    // (actually only need to check the first one that would be hit)
-    let waitTime = ex.minPollingDelay;
-    while ((p.endless && pongs.length) || pings.length) {
-        // Has the algo order been cancelled - if so, cancel all outstanding orders and stop
-        if (ex.isAlgoOrderCancelled(id)) {
-            logger.progress('Ping Pong order cancelled - stopping');
-            waitTime = ex.minPollingDelay;
-            await ex.api.cancelOrders(pings.map(order => order.order));
-            await ex.api.cancelOrders(pongs.map(order => order.order));
-            pings = [];
-            pongs = [];
-        }
-
-        // Check the pings
-        if (pings.length) {
-            pings.sort((a, b) => (a.side === 'buy' ? b.price - a.price : a.price - b.price));
-            const orderInfo = await ex.api.order(pings[0].order);
-            if (orderInfo.is_filled) {
-                logger.results('Ping Pong order: order filled');
-                pongs.push(await placeOppositeOrder(context, p, pings[0]));
-                pings.shift();
-                waitTime = ex.minPollingDelay;
-            } else if (!orderInfo.is_open) {
-                logger.results('Ping Pong order: found a cancelled order - discarding');
-                pings.shift();
-                waitTime = ex.minPollingDelay;
-            }
-        }
-
-        // and the pongs (only if this endlessly flips back and forth)
-        if (p.endless && pongs.length) {
-            pongs.sort((a, b) => (a.side === 'buy' ? b.price - a.price : a.price - b.price));
-            const orderInfo = await ex.api.order(pongs[0].order);
-            if (orderInfo.is_filled) {
-                logger.results('Ping Pong order: order filled');
-                pings.push(await placeOppositeOrder(context, p, pongs[0]));
-                pongs.shift();
-                waitTime = ex.minPollingDelay;
-            } else if (!orderInfo.is_open) {
-                logger.results('Ping Pong order: found a cancelled order - discarding');
-                pongs.shift();
-                waitTime = ex.minPollingDelay;
-            }
-        }
-
-        // wait for a bit before deciding what to do next
-        await ex.waitSeconds(waitTime);
-        if (waitTime < ex.maxPollingDelay) waitTime += 1;
-    }
-
-    ex.endAlgoOrder(id);
+    // loop, waiting for all the orders to complete (might never happen in endless mode...)
+    await pingPongLoop(context, orders, [], p, 'none');
     logger.progress('PingPong order Complete.');
 };
