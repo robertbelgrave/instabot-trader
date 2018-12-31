@@ -7,6 +7,11 @@ const ApiInterface = require('./api');
 const logger = log.logger;
 
 
+/**
+ * Deprecated - now using BitfinexApiv2
+ * Will delete this soon
+ */
+
 class BitfinexApiv1 extends ApiInterface {
     /**
      * Set up the API

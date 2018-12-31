@@ -1,7 +1,7 @@
 const log = require('../common/logger');
 const util = require('../common/util');
 const Exchange = require('./exchange');
-const BitfinexApiv1 = require('../apis/bitfinexv1');
+const BitfinexApiv2 = require('../apis/bitfinexv2');
 
 const logger = log.logger;
 
@@ -18,11 +18,16 @@ class Bitfinex extends Exchange {
         super(credentials);
         this.name = 'bitfinex';
 
-        this.minPollingDelay = 2;
-        this.maxPollingDelay = 20;
+        this.minPollingDelay = 0;
+        this.maxPollingDelay = 3;
 
         // start up any sockets or create API handlers here.
-        this.api = new BitfinexApiv1(credentials.key, credentials.secret);
+        this.api = new BitfinexApiv2(credentials.key, credentials.secret);
+
+        this.minOrderSize = 0.004;
+        this.assetPrecision = 8;
+        this.pricePrecision = 5;
+
     }
 
     /**
@@ -30,14 +35,24 @@ class Bitfinex extends Exchange {
      */
     async init(symbol) {
         // start the api
-        const symbolDetails = await this.api.init(symbol);
+        await this.api.init(symbol);
 
-        if (symbolDetails) {
-            logger.dim(symbolDetails);
-            this.minOrderSize = parseFloat(symbolDetails.minimum_order_size);
-            this.assetPrecision = symbolDetails.price_precision;
-            this.pricePrecision = symbolDetails.price_precision;
-        }
+        // Using v2 of the API, there does not appear to be a way to find out the min order size.
+        // This article (https://support.bitfinex.com/hc/en-us/articles/115003283709-What-is-the-minimum-order-size-)
+        // suggests between $10 and $25 as the min order size, so I am taking the worst case value
+        // and using that to work out a min.
+        const ticker = await this.api.ticker(symbol);
+        this.minOrderSize = util.roundDown(25 / parseFloat(ticker.bid), 5);
+    }
+
+    /**
+     * Handle shutdown
+     */
+    async terminate() {
+        logger.progress('Bitfinex exchange closing down');
+        super.terminate();
+
+        await this.api.terminate();
     }
 
     /**
@@ -47,14 +62,6 @@ class Bitfinex extends Exchange {
      */
     roundPrice(price) {
         return util.roundSignificantFigures(price, this.pricePrecision);
-    }
-
-    /**
-     * Handle shutdown
-     */
-    terminate() {
-        logger.progress('Bitfinex exchange closing down');
-        super.terminate();
     }
 }
 

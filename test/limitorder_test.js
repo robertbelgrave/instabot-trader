@@ -12,10 +12,10 @@ describe('limit Orders', async () => {
         try {
             const exchange = new Exchange({});
             const args = [{ name: 'side', value: 'wrong', index: 0 }];
-            await exchange.limitOrder('BTCUSD', args, 'test-session');
+            await exchange.commands.limitOrder({ ex: exchange, symbol: 'BTCUSD', session: 'test-session' }, args);
             assert.isOk(false, 'Should not get here');
         } catch (err) {
-            assert.deepEqual(err, new Error('side must be buy or sell'));
+            assert.equal(err.message, 'side must be buy or sell');
         }
     });
 

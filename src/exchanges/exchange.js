@@ -117,7 +117,7 @@ class Exchange {
     /**
      * Called before the exchange is destroyed
      */
-    terminate() {
+    async terminate() {
         // chance for any last minute shutdown stuff
     }
 
