@@ -1,7 +1,7 @@
 const assert = require('chai').assert;
 const sinon = require('sinon');
-const scaledOrder = require('../src/exchanges/commands/algo/scaled_order');
-const Exchange = require('../src/exchanges/exchange');
+const scaledOrder = require('../../src/exchanges/commands/algo/scaled_order');
+const Exchange = require('../../src/exchanges/exchange');
 
 
 class MockAPI {
