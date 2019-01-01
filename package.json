@@ -43,8 +43,8 @@
     "start": "node src/index.js",
     "sign": "node src/sign.js",
     "setup": "cp -n config/default.json config/local.json || true",
-    "test": "mocha",
-    "watch": "mocha --watch",
-    "coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha -- -u exports"
+    "test": "mocha --recursive",
+    "watch": "mocha --recursive --watch",
+    "coverage": "./node_modules/.bin/istanbul cover ./node_modules/.bin/_mocha -- --recursive -u exports"
   }
 }

@@ -1,6 +1,6 @@
 const assert = require('chai').assert;
 const sinon = require('sinon');
-const Exchange = require('../src/exchanges/exchange');
+const Exchange = require('../../src/exchanges/exchange');
 
 describe('limit Orders', async () => {
     afterEach(() => {
