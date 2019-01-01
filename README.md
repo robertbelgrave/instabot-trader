@@ -1,5 +1,7 @@
 # Instabot Trader
 
+[![Build Status](https://travis-ci.org/instabot42/instabot-trader.svg?branch=master)](https://travis-ci.org/instabot42/instabot-trader)
+
 A simple tool to convert text messages sent over HTTP or via a Telegram bot into
 a set of trading orders, to a variety of exchanges (Bitfinex, Deribit and Coinbase Pro).
 
