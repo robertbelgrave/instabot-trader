@@ -136,7 +136,7 @@ class Exchange {
      * @returns {*}
      */
     roundAsset(assets) {
-        return util.roundDown(assets, this.assetPrecision);
+        return util.round(assets, this.assetPrecision);
     }
 
     /**

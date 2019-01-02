@@ -49,9 +49,10 @@ module.exports = async (context, args) => {
     p.askFrom = (p.spread / 2);
     p.askTo = p.askFrom + ((p.askCount - 1) * p.askStep);
 
-    p.bidTotal = p.bidAmount * p.bidCount;
-    p.askTotal = p.askAmount * p.askCount;
-    p.total = p.bidTotal + p.askTotal;
+    p.bidTotal = ex.roundAsset(p.bidAmount * p.bidCount);
+    p.askTotal = ex.roundAsset(p.askAmount * p.askCount);
+    p.total = ex.roundAsset(p.bidTotal + p.askTotal);
+
 
     // some settings to define to allow us to lean on the ping pong order code.
     p.endless = true;

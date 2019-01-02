@@ -222,7 +222,7 @@ describe('Position Size validation', async () => {
 
         // Try and buy 2 when there is enough to do that.
         const amount = await exchange.support.scaledOrderSize({ ex: exchange, symbol: 'BTCUSD' }, params);
-        assert.equal(amount, 0.54545454);
+        assert.equal(amount, 0.54545455);
     });
 
     it('can work with position sizes on Deribit - no position', async () => {
