@@ -15,7 +15,7 @@ class MockAPI {
     walletBalances() {}
     limitOrder() {}
     order() {}
-    cancelOrders(x) {console.log('cancel', x)}
+    cancelOrders() {}
 }
 
 describe('Market Maker Orders', () => {
