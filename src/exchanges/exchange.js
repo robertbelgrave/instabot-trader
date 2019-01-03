@@ -543,7 +543,8 @@ class Exchange {
      */
     waitSeconds(delay) {
         return new Promise((resolve) => {
-            setTimeout(() => resolve({}), delay * 1000);
+            // wait the required time (plus a tiny bit to ensure other tasks get a look in)
+            setTimeout(() => resolve({}), (delay * 1000) + 50);
         });
     }
 }
