@@ -1,9 +1,7 @@
-const log = require('../common/logger');
+const logger = require('../common/logger').logger;
 const util = require('../common/util');
 const Exchange = require('./exchange');
 const BitfinexApiv2 = require('../apis/bitfinexv2');
-
-const logger = log.logger;
 
 
 /**
