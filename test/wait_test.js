@@ -35,7 +35,7 @@ describe('Wait', () => {
         assert.equal(finished.callCount, 0);
 
         // but after 10s, we have
-        await fakeTimer.tickAsync(1000, 10);
+        await fakeTimer.tickAsync(1100, 10);
         assert.equal(finished.callCount, 1);
     });
 });

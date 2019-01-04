@@ -544,7 +544,8 @@ class Exchange {
     waitSeconds(delay) {
         return new Promise((resolve) => {
             // wait the required time (plus a tiny bit to ensure other tasks get a look in)
-            setTimeout(() => resolve({}), (delay * 1000) + 50);
+            const waitFor = delay < 1 ? 50 : delay * 1000;
+            setTimeout(() => resolve({}), waitFor);
         });
     }
 }

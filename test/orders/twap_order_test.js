@@ -79,7 +79,7 @@ describe('Twap Orders', () => {
         assert.equal(market.calledTwice, true);
 
         // wait some more (just over 10s in total)
-        await fakeTimer.tickAsync(600, 100);
+        await fakeTimer.tickAsync(700, 100);
         assert.equal(finished.callCount, 1);
         assert.equal(market.calledThrice, true);
         assert.deepEqual(expect, finished.lastArg);
