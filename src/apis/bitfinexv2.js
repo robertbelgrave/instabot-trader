@@ -191,8 +191,6 @@ class BitfinexApiv2 extends ApiInterface {
             this.state.wallet.push(item);
         });
 
-        logger.dim(this.state.wallet);
-
         this.state.walletUpdates += 1;
     }
 
