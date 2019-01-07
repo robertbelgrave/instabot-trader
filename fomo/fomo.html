@@ -159,6 +159,7 @@ contain the URL of your bot instance.
                                 <option value="deribit:BTC-28DEC18">Deribit Dec18 Futures</option>
                                 <option value="deribit:BTC-29MAR19">Deribit Mar19 Futures</option>
                                 <option value="bitfinex:BTCUSD">Bitfinex BTCUSD Spot</option>
+                                <option value="bfxmargin:BTCUSD">Bitfinex BTCUSD Margin</option>
                                 <option value="coinbase:BTC-EUR">Coinbase Pro BTC-EUR Spot</option>
                             </select>
                         </div>
@@ -313,6 +314,7 @@ contain the URL of your bot instance.
                                 <option value="deribit:BTC-28DEC18">Deribit Dec18 Futures</option>
                                 <option value="deribit:BTC-29MAR19">Deribit Mar19 Futures</option>
                                 <option value="bitfinex:BTCUSD">Bitfinex BTCUSD Spot</option>
+                                <option value="bfxmargin:BTCUSD">Bitfinex BTCUSD Margin</option>
                                 <option value="coinbase:BTC-EUR">Coinbase Pro BTC-EUR Spot</option>
                             </select>
                         </div>
@@ -560,6 +562,7 @@ contain the URL of your bot instance.
                                 <option value="deribit:BTC-28DEC18">Deribit Dec18 Futures</option>
                                 <option value="deribit:BTC-29MAR19">Deribit Mar19 Futures</option>
                                 <option value="bitfinex:BTCUSD">Bitfinex BTCUSD Spot</option>
+                                <option value="bfxmargin:BTCUSD">Bitfinex BTCUSD Margin</option>
                                 <option value="coinbase:BTC-EUR">Coinbase Pro BTC-EUR Spot</option>
                             </select>
                         </div>
@@ -782,8 +785,10 @@ contain the URL of your bot instance.
                                 </p>
                                 <div class="content">
                                     <textarea id="manual-command-text" class="textarea" placeholder="10 lines of textarea" rows="10">
-BTC-PERPETUAL or BTC-28DEC18
-deribit(BTC-PERPETUAL) {
+bitfinex(BTCUSD) {
+    wait(5s);
+}
+bfxmargin(BTCUSD) {
     wait(5s);
 }
                                     </textarea>

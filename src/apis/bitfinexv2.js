@@ -9,13 +9,21 @@ class BitfinexApiv2 extends ApiInterface {
      * Set up the API
      * @param key
      * @param secret
+     * @param margin
+     * @param maxLeverage
      */
-    constructor(key, secret) {
+    constructor(key, secret, margin, maxLeverage) {
         super(key, secret);
 
         // Keep hold of the API key and secret
         this.key = key;
         this.secret = secret;
+        this.isMargin = !!margin;
+        this.maxLeverage = 1;
+        if (maxLeverage && this.isMargin) {
+            this.maxLeverage = maxLeverage > 3.33 ? 3.33 : maxLeverage;
+        }
+
         this.bfx = new BFX({
             apiKey: key,
             apiSecret: secret,
@@ -56,17 +64,16 @@ class BitfinexApiv2 extends ApiInterface {
             ws.on('open', () => { ws.auth(); });
             ws.on('close', () => { logger.debug('socket closed'); });
 
-            // ws.on('message', (data) => {
-            //     logger.progress('websocket message');
-            //     logger.info(data);
-            // });
-
             // Happens once when we are authenticated. We use this to complete set up
             ws.once('auth', () => {
-                logger.debug('bfx v2 API Authenticated');
+                logger.debug(`bfx v2 API Authenticated - ${this.isMargin ? 'margin' : 'spot'}`);
 
                 // subscribe to stuff?
                 ws.subscribeTicker(`t${symbol}`);
+
+                if (this.isMargin) {
+                    this.ws.requestCalc([`margin_sym_t${this.symbol}`]);
+                }
 
                 // give it a little bit of time to settle.
                 setTimeout(() => { resolve(); }, 1000);
@@ -113,6 +120,11 @@ class BitfinexApiv2 extends ApiInterface {
                 self.refreshAvailableFunds();
             });
 
+            ws.onMarginInfoUpdate({}, (info) => {
+                logger.info('margin Info Update');
+                //logger.info(info);
+            });
+
             // Now all the handlers are set up, open the connection
             ws.open();
         });
@@ -153,7 +165,12 @@ class BitfinexApiv2 extends ApiInterface {
         this.state.walletTimer = setTimeout(() => {
             const asset = this.symbol.substring(0, 3).toUpperCase();
             const currency = this.symbol.substring(3).toUpperCase();
-            this.ws.requestCalc([`wallet_exchange_${asset}`, `wallet_exchange_${currency}`]);
+            const walletType = (this.isMargin ? 'margin' : 'exchange');
+            this.ws.requestCalc([`wallet_${walletType}_${asset}`, `wallet_${walletType}_${currency}`]);
+            //
+            // if (this.isMargin) {
+            //     this.ws.requestCalc([`margin_sym_t${this.symbol}`]);
+            // }
         }, 300);
     }
 
@@ -166,13 +183,15 @@ class BitfinexApiv2 extends ApiInterface {
             type: item.type,
             currency: item.currency.toLowerCase(),
             amount: String(item.balance),
-            available: item.balanceAvailable === null ? String(item.balance) : String(item.balanceAvailable),
-        }));
+            available: item.balanceAvailable === null ? String(item.balance * this.maxLeverage) : String(item.balanceAvailable * this.maxLeverage),
+        })).filter(item => item.type === (this.isMargin ? 'margin' : 'exchange'));
 
         mapped.forEach((item) => {
-            this.state.wallet = this.state.wallet.filter(w => !(w.type === item.type && w.currency === item.currency));
+            this.state.wallet = this.state.wallet.filter(w => w.currency !== item.currency);
             this.state.wallet.push(item);
         });
+
+        logger.dim(this.state.wallet);
 
         this.state.walletUpdates += 1;
     }
@@ -195,6 +214,8 @@ class BitfinexApiv2 extends ApiInterface {
                 executed: order.amountOrig - order.amount,
                 price: order.price,
                 status: order.status,
+                type: order.type,
+                flags: order.flags,
                 is_filled: order.amount === 0,
                 is_canceled: isCanceled,
                 is_execited: isExecuted,
@@ -268,9 +289,10 @@ class BitfinexApiv2 extends ApiInterface {
      * @param price
      * @param side
      * @param type
+     * @param reduceOnly
      * @returns {Promise<*>}
      */
-    async newOrder(symbol, amount, price, side, type) {
+    async newOrder(symbol, amount, price, side, type, reduceOnly = false) {
         // Build new order
         const o = new Order({
             symbol: `t${symbol}`,
@@ -278,6 +300,10 @@ class BitfinexApiv2 extends ApiInterface {
             amount: side === 'buy' ? amount : -amount,
             type,
         }, this.ws);
+
+        if (reduceOnly) {
+            o.setReduceOnly(true);
+        }
 
         const bfxOrder = await o.submit();
         return this.onOrderUpdate(bfxOrder, true);
@@ -293,7 +319,7 @@ class BitfinexApiv2 extends ApiInterface {
      * @returns {*}
      */
     async limitOrder(symbol, amount, price, side, isEverything) {
-        return this.newOrder(symbol, amount, price, side, Order.type.EXCHANGE_LIMIT);
+        return this.newOrder(symbol, amount, price, side, this.isMargin ? Order.type.LIMIT : Order.type.EXCHANGE_LIMIT);
     }
 
     /**
@@ -304,7 +330,7 @@ class BitfinexApiv2 extends ApiInterface {
      * @param isEverything
      */
     async marketOrder(symbol, amount, side, isEverything) {
-        return this.newOrder(symbol, amount, 0, side, Order.type.EXCHANGE_MARKET);
+        return this.newOrder(symbol, amount, 0, side, this.isMargin ? Order.type.MARKET : Order.type.EXCHANGE_MARKET);
     }
 
     /**
@@ -317,7 +343,7 @@ class BitfinexApiv2 extends ApiInterface {
      * @returns {Promise<void>}
      */
     async stopOrder(symbol, amount, price, side, trigger) {
-        return this.newOrder(symbol, amount, price, side, Order.type.EXCHANGE_STOP);
+        return this.newOrder(symbol, amount, price, side, this.isMargin ? Order.type.STOP : Order.type.EXCHANGE_STOP, this.isMargin);
     }
 
     /**
@@ -328,7 +354,7 @@ class BitfinexApiv2 extends ApiInterface {
     cancelOrders(orders) {
         // Fire off all the cancels and collect up all the promises
         const pending = orders.map((order) => {
-            const o = new Order({id: order.id}, this.ws);
+            const o = new Order({ id: order.id }, this.ws);
             return o.cancel();
         });
 

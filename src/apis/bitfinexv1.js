@@ -250,7 +250,7 @@ class BitfinexApiv1 extends ApiInterface {
      * @returns {*}
      */
     walletBalances() {
-        return this.makeAuthRequest('balances', {});
+        return this.makeAuthRequest('balances', {}).then(balances => balances.filter(item => item.type === 'exchange'));
     }
 
     /**
