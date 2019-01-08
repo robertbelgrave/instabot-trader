@@ -6,7 +6,7 @@ const Coinbase = require('./coinbase');
 module.exports = [
     {
         name: 'bitfinex',
-        description: 'Bitfinex spot exchange',
+        description: 'Bitfinex',
         class: Bitfinex,
     },
     {

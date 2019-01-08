@@ -12,7 +12,7 @@ module.exports = async (context) => {
 
     // Filter it to just the symbol we are working with
     const assets = ex.splitSymbol(symbol);
-    const filtered = wallet.filter(item => item.type === 'exchange' && (item.currency === assets.asset || item.currency === assets.currency));
+    const filtered = wallet.filter(item => (item.currency === assets.asset || item.currency === assets.currency));
     logger.debug(filtered);
 
     return filtered;

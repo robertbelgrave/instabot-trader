@@ -10,7 +10,17 @@
       "name": "bitfinex",
       "exchange": "bitfinex",
       "key": "api-key",
-      "secret": "api-secret"
+      "secret": "api-secret",
+      "margin": false,
+      "maxLeverage": 1
+    },
+    {
+      "name": "bfxmargin",
+      "exchange": "bitfinex",
+      "key": "api-key",
+      "secret": "api-secret",
+      "margin": true,
+      "maxLeverage": 2
     },
     {
       "name": "coinbase",

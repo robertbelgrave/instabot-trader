@@ -89,7 +89,6 @@ class Coinbase extends ApiInterface {
     walletBalances() {
         return this.rateLimit().then(() => this.authClient.getAccounts()
             .then(accounts => accounts.map(item => ({
-                type: 'exchange',
                 currency: item.currency.toLowerCase(),
                 amount: item.balance,
                 available: item.available,
