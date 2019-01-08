@@ -56,6 +56,23 @@ class BitfinexApiv2 extends ApiInterface {
         const self = this;
         this.symbol = symbol;
 
+        // default to wallet to zero balance
+        const asset = this.symbol.substring(0, 3).toLowerCase();
+        const currency = this.symbol.substring(3).toLowerCase();
+        this.state.wallet = [
+            {
+                currency: asset,
+                amount: 0,
+                available: 0,
+            },
+            {
+                currency,
+                amount: 0,
+                available: 0,
+            },
+        ];
+
+
         return new Promise((resolve) => {
             const ws = self.ws;
             const eventFilter = { symbol: `t${symbol}` };
@@ -122,7 +139,7 @@ class BitfinexApiv2 extends ApiInterface {
 
             ws.onMarginInfoUpdate({}, (info) => {
                 logger.info('margin Info Update');
-                //logger.info(info);
+                // logger.info(info);
             });
 
             // Now all the handlers are set up, open the connection
@@ -167,11 +184,7 @@ class BitfinexApiv2 extends ApiInterface {
             const currency = this.symbol.substring(3).toUpperCase();
             const walletType = (this.isMargin ? 'margin' : 'exchange');
             this.ws.requestCalc([`wallet_${walletType}_${asset}`, `wallet_${walletType}_${currency}`]);
-            //
-            // if (this.isMargin) {
-            //     this.ws.requestCalc([`margin_sym_t${this.symbol}`]);
-            // }
-        }, 300);
+        }, 100);
     }
 
     /**
@@ -274,7 +287,7 @@ class BitfinexApiv2 extends ApiInterface {
      * @returns {*}
      */
     async walletBalances() {
-        while (this.state.walletUpdates < 2) {
+        if (this.state.walletUpdates < 1) {
             await this.sleep(300);
         }
         return this.state.wallet;
