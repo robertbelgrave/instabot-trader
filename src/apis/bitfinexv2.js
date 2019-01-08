@@ -220,9 +220,9 @@ class BitfinexApiv2 extends ApiInterface {
             return {
                 id: order.id,
                 side: order.amountOrig > 0 ? 'buy' : 'sell',
-                amount: order.amountOrig,
-                remaining: order.amount,
-                executed: order.amountOrig - order.amount,
+                amount: Math.abs(order.amountOrig),
+                remaining: Math.abs(order.amount),
+                executed: Math.abs(order.amountOrig) - Math.abs(order.amount),
                 price: order.price,
                 status: order.status,
                 type: order.type,
