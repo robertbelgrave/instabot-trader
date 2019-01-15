@@ -35,7 +35,7 @@ describe('Market Maker Orders', () => {
 
         // Stub the ticker
         const ticker = sinon.stub(api, 'ticker');
-        ticker.resolves({ mid: '3025', bid: '3000', ask: '3050', last_price: '3010' });
+        ticker.resolves({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
 
         // Stub the wallet balances
         const wallet = sinon.stub(api, 'walletBalances');
@@ -70,14 +70,14 @@ describe('Market Maker Orders', () => {
         ];
 
         const expectLimit = [
+            ['btcusd', 0.1, 3000, 'buy', false],
+            ['btcusd', 0.1, 2990, 'buy', false],
             ['btcusd', 0.1, 2980, 'buy', false],
             ['btcusd', 0.1, 2970, 'buy', false],
-            ['btcusd', 0.1, 2960, 'buy', false],
-            ['btcusd', 0.1, 2950, 'buy', false],
+            ['btcusd', 0.1, 3030, 'sell', false],
+            ['btcusd', 0.1, 3040, 'sell', false],
+            ['btcusd', 0.1, 3050, 'sell', false],
             ['btcusd', 0.1, 3060, 'sell', false],
-            ['btcusd', 0.1, 3070, 'sell', false],
-            ['btcusd', 0.1, 3080, 'sell', false],
-            ['btcusd', 0.1, 3090, 'sell', false],
         ];
 
         const finished = sinon.fake();
