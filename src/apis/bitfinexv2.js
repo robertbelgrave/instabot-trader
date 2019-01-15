@@ -77,13 +77,16 @@ class BitfinexApiv2 extends ApiInterface {
             const ws = self.ws;
             const eventFilter = { symbol: `t${symbol}` };
 
-            ws.on('error', err => logger.error(err));
+            ws.on('error', (err) => {
+                logger.error('Error detected on socket connection');
+                logger.error(err);
+            });
             ws.on('open', () => { ws.auth(); });
             ws.on('close', () => { logger.debug('socket closed'); });
 
             // Happens once when we are authenticated. We use this to complete set up
             ws.once('auth', () => {
-                logger.debug(`bfx v2 API Authenticated - ${this.isMargin ? 'margin' : 'spot'}`);
+                logger.progress(`bfx v2 API Authenticated - ${this.isMargin ? 'margin' : 'spot'}`);
 
                 // subscribe to stuff?
                 ws.subscribeTicker(`t${symbol}`);
@@ -158,6 +161,7 @@ class BitfinexApiv2 extends ApiInterface {
             await this.ws.close();
             this.ws = null;
         } catch (err) {
+            logger.error('Error while trying to close sockets');
             logger.error(err);
         }
     }

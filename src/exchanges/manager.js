@@ -63,6 +63,7 @@ class ExchangeManager {
         try {
             await newExchange.init(symbol);
         } catch (err) {
+            logger.error('Failed to start exchange driver');
             logger.error(err);
             await this.closeExchange(newExchange);
             return null;
