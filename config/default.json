@@ -49,6 +49,9 @@
       { "name": "example", "message": "This is an example message"}
     ]
   },
+  "webhook": {
+    "url": ""
+  },
   "notifications": {
     "default": [ "sms" ],
     "alertOnStartup": false
