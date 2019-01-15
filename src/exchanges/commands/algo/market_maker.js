@@ -64,7 +64,6 @@ module.exports = async (context, args) => {
 
     // show a little progress
     logger.progress(`MARKET MAKER ORDER - ${ex.name}`);
-    logger.progress(p);
 
     // Abort now if anything is rubbish
     if (p.bidCount < 1 && p.askCount < 1) {
@@ -78,10 +77,22 @@ module.exports = async (context, args) => {
         return;
     }
 
+    // Convert from and to to absolute prices. Scaled order will do this for us, but this does
+    // it with fewer api calls and ensures that both bids and asks are keyed off the same starting price.
+    const orderbook = await ex.support.ticker(context);
+    const midPrice = (parseFloat(orderbook.bid) + parseFloat(orderbook.ask)) / 2;
+    p.bidFrom = `@${ex.roundPrice(midPrice - p.bidFrom)}`;
+    p.bidTo = `@${ex.roundPrice(midPrice - p.bidTo)}`;
+    p.askFrom = `@${ex.roundPrice(midPrice + p.askFrom)}`;
+    p.askTo = `@${ex.roundPrice(midPrice + p.askTo)}`;
+
+    // report the data we are actually going to use
+    logger.progress(p);
+
     // step one - place the bids
     const bidArgs = [
-        { name: 'from', value: String(p.bidFrom), index: 0 },
-        { name: 'to', value: String(p.bidTo), index: 1 },
+        { name: 'from', value: p.bidFrom, index: 0 },
+        { name: 'to', value: p.bidTo, index: 1 },
         { name: 'orderCount', value: String(p.bidCount), index: 2 },
         { name: 'amount', value: String(p.bidTotal), index: 3 },
         { name: 'side', value: 'buy', index: 4 },
@@ -92,8 +103,8 @@ module.exports = async (context, args) => {
 
     // step two - place the asks
     const askArgs = [
-        { name: 'from', value: String(p.askFrom), index: 0 },
-        { name: 'to', value: String(p.askTo), index: 1 },
+        { name: 'from', value: p.askFrom, index: 0 },
+        { name: 'to', value: p.askTo, index: 1 },
         { name: 'orderCount', value: String(p.askCount), index: 2 },
         { name: 'amount', value: String(p.askTotal), index: 3 },
         { name: 'side', value: 'sell', index: 4 },
