@@ -81,7 +81,7 @@ class BitfinexApiv2 extends ApiInterface {
                 logger.error('Error detected on socket connection');
                 logger.error(err);
             });
-            ws.on('open', () => { ws.auth(); });
+            ws.on('open', () => { logger.debug('socket opened'); ws.auth(); });
             ws.on('close', () => { logger.debug('socket closed'); });
 
             // Happens once when we are authenticated. We use this to complete set up
@@ -111,6 +111,7 @@ class BitfinexApiv2 extends ApiInterface {
 
             // Some handlers to track the state our of wallet
             ws.onWalletSnapshot({}, (wallet) => {
+                logger.debug('wallet snapshot');
                 self.onWalletUpdate(wallet);
                 self.refreshAvailableFunds();
             });
@@ -119,6 +120,7 @@ class BitfinexApiv2 extends ApiInterface {
 
             // handlers to track the state of ordes
             ws.onOrderSnapshot(eventFilter, (orders) => {
+                logger.debug('order snapshot');
                 self.onOrderSnapshot(orders);
             });
 
