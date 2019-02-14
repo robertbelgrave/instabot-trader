@@ -200,11 +200,11 @@ class DeribitApi extends ApiInterface {
     }
 
     /**
-     * Find out the precision used for the symbol
+     * Get the symbol
      * @param symbol
-     * @returns {Promise<void>}
+     * @returns {Promise<*>}
      */
-    async init(symbol) {
+    async addSymbol(symbol) {
         const url = '/api/v1/public/getinstruments';
         const params = { expired: false };
         const all = await this.makeAuthRequest(url, params);

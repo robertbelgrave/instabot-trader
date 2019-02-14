@@ -49,9 +49,9 @@ module.exports = async (context, args) => {
     p.askFrom = (p.spread / 2);
     p.askTo = p.askFrom + ((p.askCount - 1) * p.askStep);
 
-    p.bidTotal = ex.roundAsset(p.bidAmount * p.bidCount);
-    p.askTotal = ex.roundAsset(p.askAmount * p.askCount);
-    p.total = ex.roundAsset(p.bidTotal + p.askTotal);
+    p.bidTotal = ex.roundAsset(symbol, p.bidAmount * p.bidCount);
+    p.askTotal = ex.roundAsset(symbol, p.askAmount * p.askCount);
+    p.total = ex.roundAsset(symbol, p.bidTotal + p.askTotal);
 
 
     // some settings to define to allow us to lean on the ping pong order code.
@@ -81,10 +81,10 @@ module.exports = async (context, args) => {
     // it with fewer api calls and ensures that both bids and asks are keyed off the same starting price.
     const orderbook = await ex.support.ticker(context);
     const midPrice = (parseFloat(orderbook.bid) + parseFloat(orderbook.ask)) / 2;
-    p.bidFrom = `@${ex.roundPrice(midPrice - p.bidFrom)}`;
-    p.bidTo = `@${ex.roundPrice(midPrice - p.bidTo)}`;
-    p.askFrom = `@${ex.roundPrice(midPrice + p.askFrom)}`;
-    p.askTo = `@${ex.roundPrice(midPrice + p.askTo)}`;
+    p.bidFrom = `@${ex.roundPrice(symbol, midPrice - p.bidFrom)}`;
+    p.bidTo = `@${ex.roundPrice(symbol, midPrice - p.bidTo)}`;
+    p.askFrom = `@${ex.roundPrice(symbol, midPrice + p.askFrom)}`;
+    p.askTo = `@${ex.roundPrice(symbol, midPrice + p.askTo)}`;
 
     // report the data we are actually going to use
     logger.progress(p);

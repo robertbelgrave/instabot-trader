@@ -76,8 +76,8 @@ module.exports = async (context, args) => {
     }
 
     // Get an array of amounts
-    const roundAsset = asset => ex.roundAsset(asset);
-    const roundPrice = price => ex.roundPrice(price);
+    const roundAsset = asset => ex.roundAsset(symbol, asset);
+    const roundPrice = price => ex.roundPrice(symbol, price);
     const amounts = scaledAmounts(p.orderCount, p.amount.value, p.varyAmount, roundAsset);
     const prices = scaledPrices(p.orderCount, p.from, p.to, p.varyPrice, p.easing, roundPrice);
 

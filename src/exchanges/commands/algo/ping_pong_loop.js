@@ -46,6 +46,7 @@ async function placeLimitOrder(context, side, price, amount, tag) {
         return { order, side, price, amount, units: '' };
     } catch (err) {
         logger.error('failed to place new limit order in ping pong - ignoring');
+        logger.error(`Tried ${side} ${amount} at ${price}`);
         logger.error(err);
 
         return { order: null };

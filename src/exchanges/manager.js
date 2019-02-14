@@ -61,7 +61,7 @@ class ExchangeManager {
 
         // Let the exchange do anything it needs before it is used.
         try {
-            await newExchange.init(symbol);
+            await newExchange.init();
         } catch (err) {
             logger.error('Failed to start exchange driver');
             logger.error(err);
@@ -252,6 +252,7 @@ class ExchangeManager {
             if (exchangeCredentials) {
                 const exchange = await this.openExchange(exchangeName, exchangeCredentials, symbol);
                 if (exchange) {
+                    await exchange.addSymbol(symbol);
                     all.push(this.executeCommandSequence(exchange, symbol, actions)
                         .catch((err) => {
                             logger.error(`Command sequence terminated - ${err}`);

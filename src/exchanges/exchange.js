@@ -1,5 +1,6 @@
 const logger = require('../common/logger').logger;
 const util = require('../common/util');
+const SymbolData = require('../common/symbol_data');
 
 // Fetch the commands we support
 const icebergOrder = require('./commands/algo/iceberg_order');
@@ -36,14 +37,12 @@ class Exchange {
         this.credentials = credentials;
         this.refCount = 1;
 
-        this.minOrderSize = 0.002;
-        this.pricePrecision = 2;
-        this.assetPrecision = 6;
         this.minPollingDelay = 1;
         this.maxPollingDelay = 20;
 
         this.sessionOrders = [];
         this.algorithicOrders = [];
+        this.symbolData = new SymbolData();
         this.api = null;
 
         this.support = {
@@ -59,8 +58,8 @@ class Exchange {
             twapOrder,
             pingPongOrder,
             marketMakerOrder,
-            steppedMarketOrder: twapOrder,  // duplicate using legacy name
-            accDisOrder: icebergOrder,      // duplicate for common names
+            steppedMarketOrder: twapOrder, // duplicate using legacy name
+            accDisOrder: icebergOrder, // duplicate for common names
 
             // Regular orders
             limitOrder,
@@ -110,7 +109,16 @@ class Exchange {
     /**
      * Called after the exchange has been created, but before it has been used.
      */
-    async init(symbol) {
+    async init() {
+        // nothing
+    }
+
+    /**
+     * Adding a symbol
+     * @param symbol
+     * @returns {Promise<void>}
+     */
+    async addSymbol(symbol) {
         // nothing
     }
 
@@ -123,20 +131,22 @@ class Exchange {
 
     /**
      * Rounds the price. eg, on the BTCUSD pair, this would be rounding the amount of USD
+     * @param symbol
      * @param price
      * @returns {*}
      */
-    roundPrice(price) {
-        return util.roundDown(price, this.pricePrecision);
+    roundPrice(symbol, price) {
+        return util.roundDown(price, this.symbolData.pricePrecision(symbol));
     }
 
     /**
      * Rounds an amount of assets. eg on BTCUSD pair, this would be round an amount of BTC
+     * @param symbol
      * @param assets
      * @returns {*}
      */
-    roundAsset(assets) {
-        return util.round(assets, this.assetPrecision);
+    roundAsset(symbol, assets) {
+        return util.round(assets, this.symbolData.assetPrecision(symbol));
     }
 
     /**
@@ -355,7 +365,7 @@ class Exchange {
             return t;
         }, 0);
 
-        const roundedTotal = this.roundAsset(total);
+        const roundedTotal = this.roundAsset(symbol, total);
         logger.results(`Total @ ${price}: ${roundedTotal} ${asset.asset}`);
         return roundedTotal;
     }
@@ -380,7 +390,7 @@ class Exchange {
             return t;
         }, 0);
 
-        const roundedTotal = this.roundPrice(total);
+        const roundedTotal = this.roundPrice(symbol, total);
         logger.results(`Total @ ${price}: ${roundedTotal} ${asset.currency}`);
         return roundedTotal;
     }
@@ -412,7 +422,7 @@ class Exchange {
             return total;
         }, 0);
 
-        const roundedTotal = this.roundAsset(spendable);
+        const roundedTotal = this.roundAsset(symbol, spendable);
         logger.results(`Asset balance @ ${price}: ${roundedTotal}`);
         return roundedTotal;
     }
@@ -441,7 +451,7 @@ class Exchange {
         orderSize = orderSize > available ? available : orderSize;
 
         // Prevent silly small orders
-        if (orderSize < this.minOrderSize) {
+        if (orderSize < this.symbolData.minOrderSize(symbol)) {
             orderSize = 0;
         }
 
@@ -449,7 +459,7 @@ class Exchange {
             total,
             available,
             isAllAvailable: (orderSize === available),
-            orderSize: this.roundAsset(orderSize),
+            orderSize: this.roundAsset(symbol, orderSize),
         };
     }
 
@@ -465,7 +475,7 @@ class Exchange {
         const regex = /@([0-9]+(\.[0-9]*)?)/;
         const m = regex.exec(offsetStr);
         if (m) {
-            return Promise.resolve(this.roundPrice(parseFloat(m[1])));
+            return Promise.resolve(this.roundPrice(symbol, parseFloat(m[1])));
         }
 
         // must be a regular offset or % offset, so we'll need to know the current price
@@ -475,11 +485,11 @@ class Exchange {
             const currentPrice = parseFloat(orderbook.bid);
             const finalOffset = offset.units === '%' ? currentPrice * (offset.value / 100) : offset.value;
 
-            return this.roundPrice(currentPrice - finalOffset);
+            return this.roundPrice(symbol, currentPrice - finalOffset);
         }
         const currentPrice = parseFloat(orderbook.ask);
         const finalOffset = offset.units === '%' ? currentPrice * (offset.value / 100) : offset.value;
-        return this.roundPrice(currentPrice + finalOffset);
+        return this.roundPrice(symbol, currentPrice + finalOffset);
     }
 
     /**
@@ -531,7 +541,7 @@ class Exchange {
 
         // We want `position`, but have `total`
         const target = parseFloat(position);
-        const change = this.roundAsset(target - total);
+        const change = this.roundAsset(symbol, target - total);
 
         return { side: change < 0 ? 'sell' : 'buy', amount: { value: Math.abs(change), units: '' } };
     }

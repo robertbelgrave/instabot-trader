@@ -143,6 +143,7 @@ describe('Position Size validation', async () => {
 
     it('can calculate scaled order size - sell 0.005btc when it would result in orders too small', async () => {
         const exchange = new Bitfinex({});
+        exchange.symbolData.update('BTCUSD', { minOrderSize: 0.002 });
 
         // Build a mock API to call
         class MockAPI { walletBalances() {}}
@@ -199,6 +200,10 @@ describe('Position Size validation', async () => {
 
     it('can calculate scaled order size - buy 1btc without enough money', async () => {
         const exchange = new Bitfinex({});
+        exchange.symbolData.update('BTCUSD', {
+            assetPrecision: 8,
+        });
+
 
         // Build a mock API to call
         class MockAPI { walletBalances() {}}
