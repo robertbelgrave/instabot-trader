@@ -22,14 +22,16 @@ class Coinbase extends Exchange {
     }
 
     /**
-     * Called after the exchange has been created, but before it has been used.
+     * Adds a new symbol
+     * @param symbol
+     * @returns {Promise<void>}
      */
-    async init(symbol) {
+    async addSymbol(symbol) {
         // start the api
-        const symbolDetails = await this.api.init(symbol);
+        const symbolDetails = await this.api.addSymbol(symbol);
         if (symbolDetails) {
             logger.dim(symbolDetails);
-            this.minOrderSize = parseFloat(symbolDetails.base_min_size);
+            const minOrderSize = parseFloat(symbolDetails.base_min_size);
 
             const calcPrecision = (v) => {
                 let precision = 0;
@@ -42,11 +44,17 @@ class Coinbase extends Exchange {
             };
 
             // How to round prices
-            this.pricePrecision = calcPrecision(symbolDetails.quote_increment);
+            const pricePrecision = calcPrecision(symbolDetails.quote_increment);
 
             // allow a bit more precision where some is allowed, as the exchange does not seem to stop this
             const ap = calcPrecision(symbolDetails.base_min_size);
-            this.assetPrecision = ap === 0 ? 0 : ap + 1;
+            const assetPrecision = ap === 0 ? 0 : ap + 1;
+
+            this.symbolData.update(symbol, {
+                minOrderSize,
+                assetPrecision,
+                pricePrecision,
+            });
         }
     }
 

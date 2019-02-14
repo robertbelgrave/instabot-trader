@@ -44,10 +44,10 @@ module.exports = async (context, args) => {
     // If ping and pong amounts are not given, work them out from amount or position
     if ((p.pingAmount === 0) && (p.pongAmount === 0)) {
         const modifiedPosition = await ex.positionToAmount(symbol, p.position, p.side, p.amount);
-        p.pingAmount = p.pongAmount = ex.roundAsset(modifiedPosition.amount.value / p.orderCount);
+        p.pingAmount = p.pongAmount = ex.roundAsset(symbol, modifiedPosition.amount.value / p.orderCount);
     }
 
-    p.amount = String(ex.roundAsset(p.pingAmount * p.orderCount));
+    p.amount = String(ex.roundAsset(symbol, p.pingAmount * p.orderCount));
 
     // show a little progress
     logger.progress(`PING PONG ORDER - ${ex.name}`);

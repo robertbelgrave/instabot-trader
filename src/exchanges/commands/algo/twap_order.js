@@ -45,7 +45,7 @@ module.exports = async (context, args) => {
     p.amount = modifiedPosition.amount;
 
     // figure out how big each order needs to be
-    const roundAsset = asset => ex.roundAsset(asset);
+    const roundAsset = asset => ex.roundAsset(symbol, asset);
     const amounts = scaledAmounts(p.orderCount, p.amount.value, p.varyAmount, roundAsset);
 
     // Log the algo order, so it can be cancelled

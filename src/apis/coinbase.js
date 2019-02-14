@@ -52,11 +52,11 @@ class Coinbase extends ApiInterface {
     }
 
     /**
-     * Find out the precision used for the symbol
+     * Find out about the new symbol
      * @param symbol
-     * @returns {Promise<void>}
+     * @returns {Promise<ProductInfo>}
      */
-    async init(symbol) {
+    async addSymbol(symbol) {
         const products = await this.publicClient.getProducts();
         const match = products.filter(s => s.id.toLowerCase() === symbol.toLowerCase()).shift();
         if (!match) {

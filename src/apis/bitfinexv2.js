@@ -38,118 +38,140 @@ class BitfinexApiv2 extends ApiInterface {
 
         // cache of some data
         this.state = {
-            ticker: null,
+            ticker: [],
             wallet: [],
             walletUpdates: 0,
             walletTimer: null,
             orders: [],
         };
-        this.symbol = '';
+        this.symbols = [];
+    }
+
+    /**
+     * Subscribe to all the events relating to a symbol that we want
+     * @param symbol
+     */
+    subscribeSymbol(symbol) {
+        const ws = this.ws;
+        const eventFilter = { symbol: `t${symbol}` };
+
+        // Every time the price changes, this happens.
+        ws.onTicker(eventFilter, (ticker) => {
+            const t = ticker.toJS();
+            this.state.ticker = this.state.ticker.filter(item => item.symbol !== symbol);
+            this.state.ticker.push({
+                symbol,
+                bid: String(t.bid),
+                ask: String(t.ask),
+                last_price: String(t.lastPrice),
+            });
+        });
+
+        // handlers to track the state of ordes
+        ws.onOrderSnapshot(eventFilter, (orders) => {
+            logger.debug('order snapshot');
+            this.onOrderSnapshot(orders);
+        });
+
+        ws.onOrderNew(eventFilter, (order) => {
+            logger.debug(`New order seen - id:${order.id}`);
+            this.onOrderUpdate(order);
+            this.refreshAvailableFunds();
+        });
+
+        ws.onOrderUpdate(eventFilter, (order) => {
+            logger.debug(`Order updated - id:${order.id}`);
+            this.onOrderUpdate(order);
+            this.refreshAvailableFunds();
+        });
+
+        ws.onOrderClose(eventFilter, (order) => {
+            logger.debug(`Order closed - id:${order.id}`);
+            this.onOrderUpdate(order);
+            this.refreshAvailableFunds();
+        });
+
+        ws.subscribeTicker(`t${symbol}`);
+
+        if (this.isMargin) {
+            this.ws.requestCalc([`margin_sym_t${symbol}`]);
+        }
     }
 
     /**
      * Open the socket connection and attaches handles to events we need to know about
-     * @param symbol
      * @returns {Promise<any>}
      */
-    init(symbol) {
+    init() {
         const self = this;
-        this.symbol = symbol;
+        const ws = self.ws;
 
-        // default to wallet to zero balance
-        const asset = this.symbol.substring(0, 3).toLowerCase();
-        const currency = this.symbol.substring(3).toLowerCase();
-        this.state.wallet = [
-            {
-                currency: asset,
-                amount: 0,
-                available: 0,
-            },
-            {
-                currency,
-                amount: 0,
-                available: 0,
-            },
-        ];
+        ws.on('error', (err) => {
+            logger.error('Error detected on socket connection');
+            logger.error(err);
+        });
 
+        ws.on('open', () => {
+            logger.debug('socket opened');
+            ws.auth();
+        });
 
-        return new Promise((resolve) => {
-            const ws = self.ws;
-            const eventFilter = { symbol: `t${symbol}` };
+        ws.on('close', () => { logger.debug('socket closed'); });
 
-            ws.on('error', (err) => {
-                logger.error('Error detected on socket connection');
-                logger.error(err);
+        // Some handlers to track the state our of wallet
+        ws.onWalletSnapshot({}, (wallet) => {
+            logger.debug('wallet snapshot');
+            self.onWalletUpdate(wallet);
+            self.refreshAvailableFunds();
+        });
+
+        ws.onWalletUpdate({}, wallet => self.onWalletUpdate([wallet]));
+
+        // Happens once when we are authenticated. We use this to complete set up
+        ws.once('auth', () => {
+            logger.progress(`bfx v2 API Authenticated - ${this.isMargin ? 'margin' : 'spot'}`);
+
+            // subscribe to stuff?
+            this.symbols.forEach((sym) => {
+                this.subscribeSymbol(sym);
             });
-            ws.on('open', () => { logger.debug('socket opened'); ws.auth(); });
-            ws.on('close', () => { logger.debug('socket closed'); });
+        });
 
-            // Happens once when we are authenticated. We use this to complete set up
+        // Open the socket and resolve when we are authed
+        return new Promise((resolve) => {
             ws.once('auth', () => {
-                logger.progress(`bfx v2 API Authenticated - ${this.isMargin ? 'margin' : 'spot'}`);
-
-                // subscribe to stuff?
-                ws.subscribeTicker(`t${symbol}`);
-
-                if (this.isMargin) {
-                    this.ws.requestCalc([`margin_sym_t${this.symbol}`]);
-                }
-
                 // give it a little bit of time to settle.
                 setTimeout(() => { resolve(); }, 1000);
-            });
-
-            // Every time the price changes, this happens.
-            ws.onTicker(eventFilter, (ticker) => {
-                const t = ticker.toJS();
-                self.state.ticker = {
-                    bid: String(t.bid),
-                    ask: String(t.ask),
-                    last_price: String(t.lastPrice),
-                };
-            });
-
-            // Some handlers to track the state our of wallet
-            ws.onWalletSnapshot({}, (wallet) => {
-                logger.debug('wallet snapshot');
-                self.onWalletUpdate(wallet);
-                self.refreshAvailableFunds();
-            });
-
-            ws.onWalletUpdate({}, wallet => self.onWalletUpdate([wallet]));
-
-            // handlers to track the state of ordes
-            ws.onOrderSnapshot(eventFilter, (orders) => {
-                logger.debug('order snapshot');
-                self.onOrderSnapshot(orders);
-            });
-
-            ws.onOrderNew(eventFilter, (order) => {
-                logger.debug(`New order seen - id:${order.id}`);
-                self.onOrderUpdate(order);
-                self.refreshAvailableFunds();
-            });
-
-            ws.onOrderUpdate(eventFilter, (order) => {
-                logger.debug(`Order updated - id:${order.id}`);
-                self.onOrderUpdate(order);
-                self.refreshAvailableFunds();
-            });
-
-            ws.onOrderClose(eventFilter, (order) => {
-                logger.debug(`Order closed - id:${order.id}`);
-                self.onOrderUpdate(order);
-                self.refreshAvailableFunds();
-            });
-
-            ws.onMarginInfoUpdate({}, (info) => {
-                logger.info('margin Info Update');
-                // logger.info(info);
             });
 
             // Now all the handlers are set up, open the connection
             ws.open();
         });
+    }
+
+    /**
+     * Called when a new symbol is being added
+     * @param symbol
+     */
+    async addSymbol(symbol) {
+        logger.debug(`adding ${symbol}`);
+        if (this.symbols.indexOf(symbol) >= 0) {
+            return;
+        }
+
+        // add the symbol
+        this.symbols.push(symbol);
+        if (this.ws.isAuthenticated()) {
+            this.subscribeSymbol(symbol);
+        }
+
+        // Wait for the ticker to be live
+        let tries = 10;
+        while (tries > 0 && this.state.ticker.findIndex(item => item.symbol === symbol) < 0) {
+            logger.debug('waiting for ticker to be valid');
+            await this.sleep(300);
+            tries -= 1;
+        }
     }
 
     /**
@@ -186,10 +208,12 @@ class BitfinexApiv2 extends ApiInterface {
         this.state.walletUpdates = 0;
         clearTimeout(this.state.walletTimer);
         this.state.walletTimer = setTimeout(() => {
-            const asset = this.symbol.substring(0, 3).toUpperCase();
-            const currency = this.symbol.substring(3).toUpperCase();
-            const walletType = (this.isMargin ? 'margin' : 'exchange');
-            this.ws.requestCalc([`wallet_${walletType}_${asset}`, `wallet_${walletType}_${currency}`]);
+            this.symbols.forEach((symbol) => {
+                const asset = symbol.substring(0, 3).toUpperCase();
+                const currency = symbol.substring(3).toUpperCase();
+                const walletType = (this.isMargin ? 'margin' : 'exchange');
+                this.ws.requestCalc([`wallet_${walletType}_${asset}`, `wallet_${walletType}_${currency}`]);
+            });
         }, 100);
     }
 
@@ -281,11 +305,13 @@ class BitfinexApiv2 extends ApiInterface {
      * @returns {*}
      */
     async ticker(symbol) {
-        if (symbol !== this.symbol) {
-            throw new Error(`Unexpected symbol in ticker - got ${symbol}, expected ${this.symbol}.`);
+        const index = this.state.ticker.findIndex(item => item.symbol === symbol);
+        if (index < 0) {
+            logger.error(this.state.ticker);
+            throw new Error(`Unexpected symbol in ticker - looking for ${symbol}.`);
         }
 
-        return this.state.ticker;
+        return this.state.ticker[index];
     }
 
     /**

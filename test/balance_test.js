@@ -194,8 +194,9 @@ describe('Order Size Calculations', () => {
 
     it('can accept absolute prices', async () => {
         const exchange = new Exchange({});
-        exchange.pricePrecision = 4;
-
+        exchange.symbolData.update('BTCUSD', {
+            pricePrecision: 4,
+        });
 
         // Expect 10% below 6590 (659 below)
         assert.equal(await exchange.offsetToAbsolutePrice('BTCUSD', 'buy', '@1234.56'), 1234.56);

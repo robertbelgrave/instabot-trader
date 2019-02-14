@@ -18,7 +18,7 @@ module.exports = async (context, args) => {
     }, args);
 
     // Get the params in units we can use (numbers!)
-    p.totalAmount = ex.roundAsset(p.totalAmount);
+    p.totalAmount = ex.roundAsset(symbol, p.totalAmount);
     p.averageAmount = parseFloat(p.averageAmount);
     p.limitPrice = parseFloat(p.limitPrice);
     p.timeLimit = ex.timeToSeconds(p.timeLimit, 0);
@@ -50,7 +50,7 @@ module.exports = async (context, args) => {
     let isSuspended = false;
 
     // The loop until there is nothing left to order
-    while (amountLeft >= ex.minOrderSize) {
+    while (amountLeft >= ex.symbolData.minOrderSize(symbol)) {
         // have we reached the expiry time of the order
         if ((ex.isAlgoOrderCancelled(id)) || (p.timeLimit > 0 && expiryTime < Date.now())) {
             logger.progress('Iceberg order over expiry time or cancelled - stopping');
@@ -70,7 +70,7 @@ module.exports = async (context, args) => {
             // are we the right side of the limit price?
             if (isUnderLimitPrice) {
                 // Figure out how big the order should be (90% to 110% of average amount)
-                let amount = ex.roundAsset(p.averageAmount * util.randomRange(0.9, 1.1));
+                let amount = ex.roundAsset(symbol, p.averageAmount * util.randomRange(0.9, 1.1));
                 if (amount > amountLeft) amount = amountLeft;
 
                 // figure out some prices for the order

@@ -52,10 +52,10 @@ module.exports = async (context, p) => {
     }
 
     // Would this result in trying to place orders below the min order size?
-    if ((assetToSpend / orderCount) < ex.minOrderSize) {
+    if ((assetToSpend / orderCount) < ex.symbolData.minOrderSize(symbol)) {
         return 0;
     }
 
     // We had enough funds, so just do as they asked
-    return ex.roundAsset(assetToSpend);
+    return ex.roundAsset(symbol, assetToSpend);
 };

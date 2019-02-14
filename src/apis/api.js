@@ -14,8 +14,20 @@ class ApiInterface {
      * @param symbol
      * @returns {Promise<void>}
      */
-    async init(symbol) {
+    async init() {
         // a chance for any start up stuff
+    }
+
+    /**
+     * Called before commands are executed on an exchange to tell it about the symbol
+     * the commands will relate to. This gives the exchange a chance to start listening
+     * of any events relevant to the symbol.
+     * @param symbol
+     * @returns {Promise<void>}
+     */
+    async addSymbol(symbol) {
+        // called to add a symbol to an already open exchange
+        // symbol may already have been added before, so check if that matters
     }
 
     /**
