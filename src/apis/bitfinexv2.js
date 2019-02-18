@@ -394,11 +394,14 @@ class BitfinexApiv2 extends ApiInterface {
      * @param orders - and array of orders to cancel
      * @returns {*}
      */
-    cancelOrders(orders) {
+    async cancelOrders(orders) {
         // Fire off all the cancels and collect up all the promises
-        const pending = orders.map((order) => {
-            const o = new Order({ id: order.id }, this.ws);
-            return o.cancel();
+        const pending = orders.map(async (order) => {
+            const currentOrderState = await this.order(order);
+            if (currentOrderState && currentOrderState.is_canceled === false) {
+                const o = new Order({ id: order.id }, this.ws);
+                return o.cancel();
+            }
         });
 
         // wait for all the promises to resolve.
