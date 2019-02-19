@@ -1,6 +1,7 @@
 const BFX = require('bitfinex-api-node');
 const Order = require('bfx-api-node-models').Order;
 const logger = require('../common/logger').logger;
+const timeoutPromise = require('../common/timeout-promise');
 const ApiInterface = require('./api');
 
 
@@ -105,6 +106,11 @@ class BitfinexApiv2 extends ApiInterface {
     init() {
         const self = this;
         const ws = self.ws;
+
+        // ws.on('message', (m) => {
+        //     logger.debug('socket message');
+        //     logger.debug(m);
+        // });
 
         ws.on('error', (err) => {
             logger.error('Error detected on socket connection');
@@ -395,17 +401,13 @@ class BitfinexApiv2 extends ApiInterface {
      * @returns {*}
      */
     async cancelOrders(orders) {
-        // Fire off all the cancels and collect up all the promises
-        const pending = orders.map(async (order) => {
-            const currentOrderState = await this.order(order);
-            if (currentOrderState && currentOrderState.is_canceled === false) {
-                const o = new Order({ id: order.id }, this.ws);
-                return o.cancel();
-            }
-        });
-
-        // wait for all the promises to resolve.
-        return Promise.all(pending);
+        try {
+            const pending = this.ws.cancelOrders(orders);
+            await timeoutPromise(3000, pending);
+        } catch (e) {
+            logger.error('timed out wait for orders to cancel - likely order that\'s already been cancelled');
+            logger.error(e);
+        }
     }
 
     /**
