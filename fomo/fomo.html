@@ -655,7 +655,7 @@ contain the URL of your bot instance.
                                                 <div class="field">
                                                     <label class="label">Spread (USD)</label>
                                                     <div class="control">
-                                                        <input name="spread" class="input mm-spread mm-field" type="text" value="26">
+                                                        <input name="spread" class="input mm-spread mm-field" type="text" value="16">
                                                     </div>
                                                 </div>
                                             </div>
@@ -669,24 +669,13 @@ contain the URL of your bot instance.
                                                     <div class="control">
                                                         <div class="select">
                                                             <select name="autoBalance">
-                                                                <option selected="selected" value="limit">Using limit orders (icebergs)</option>
-                                                                <option value="market">Using market orders</option>
-                                                                <option value="none">No auto balancing</option>
+                                                                <option selected="selected" value="none">No auto balancing</option>
+                                                                <option value="shuffle">Shuffle orders up to price</option>
                                                             </select>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <div class="column">
-                                                <div class="field">
-                                                    <label class="label">Auto balance percentage</label>
-                                                    <div class="control">
-                                                        <input name="autoBalanceAt" class="input mm-field" type="text" value="15">
-                                                    </div>
-                                                    <p>Start auto balancing orders when only this percentage of bids or asks remains</p>
-                                                </div>
-                                            </div>
-
                                         </div>
 
                                         <button class="trigger-action button is-medium is-success" data-action="market-maker">Execute</button>
@@ -1014,7 +1003,7 @@ bfxmargin(BTCUSD) {
             marketMakerOrder(
                 bidAmount={{bidSize}}, bidStep={{bidStep}}, bidCount={{bidCount}},
                 askAmount={{askSize}}, askStep={{askStep}}, askCount={{askCount}},
-                spread={{spread}}, autoBalance={{autoBalance}}, autoBalanceAt={{autoBalanceAt}}%
+                spread={{spread}}, autoBalance={{autoBalance}}
             );
         }
     </div>

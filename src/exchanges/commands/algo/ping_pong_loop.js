@@ -1,26 +1,5 @@
 const uuid = require('uuid/v4');
 const logger = require('../../../common/logger').logger;
-const icebergOrder = require('./iceberg_order');
-
-
-/**
- * Actually place the order
- * @param context
- * @param side
- * @param amount
- * @returns {Promise<*>}
- */
-async function placeMarketOrder(context, side, amount) {
-    try {
-        const { ex = {}, symbol = '' } = context;
-
-        return await ex.api.marketOrder(symbol, amount, side, false);
-    } catch (err) {
-        logger.error('failed to place market order in ping pong rebalance - ignoring');
-        logger.error(err);
-        return {};
-    }
-}
 
 /**
  * Actually place the order
@@ -69,103 +48,6 @@ async function placeOppositeOrder(context, p, original) {
     return placeLimitOrder(context, side, price, amount, p.tag);
 }
 
-
-/**
- *
- * @param context
- * @param side
- * @param amount
- * @param limitPrice
- * @param tag
- * @returns {Promise<undefined>}
- */
-async function placeIcebergOrder(context, side, amount, limitPrice, tag) {
-    try {
-        // set up the iceberg order we'll use to auto balance the book
-        const args = [
-            { name: 'side', value: side, index: 0 },
-            { name: 'totalAmount', value: String(amount), index: 1 },
-            { name: 'averageAmount', value: String(amount*2), index: 2 },
-            { name: 'variance', value: '0', index: 3 },
-            { name: 'limitPrice', value: String(limitPrice), index: 4 },
-            { name: 'timeLimit', value: '29m', index: 5 },
-            { name: 'tag', value: tag, index: 6 },
-        ];
-
-        return await icebergOrder(context, args);
-    } catch (err) {
-        logger.error('ping pong rebalance iceberg order failed - ignoring');
-        logger.error(err);
-    }
-
-    return {};
-}
-
-/**
- * Have we had 30 minutes without activity (30m is the max iceberg life
- * @param lastActivity
- * @returns {boolean}
- */
-function hasBeenIdleLongEnough(lastActivity) {
-    const thirtyMinutes = 1000 * 60 * 30;
-    const thirtyMinutesAgo = Date.now() - thirtyMinutes;
-
-    return lastActivity < thirtyMinutesAgo;
-}
-
-
-/**
- * Attempt to re-balance the book
- * @param context
- * @param p
- * @param autoBalance
- * @param pings
- * @param pongs
- * @param pendingOrders
- * @returns {Promise<void>}
- */
-async function rebalanceBook(context, p, autoBalance, pings, pongs, pendingOrders) {
-    const { ex = {} } = context;
-
-    // find last order on the pong list. cancel it and remove it from the list
-    const toCancel = pongs.pop();
-    logger.info(`Cancelling ping pong order ${toCancel.side} ${toCancel.amount} at ${toCancel.price}`);
-    await ex.api.cancelOrders([toCancel.order]);
-
-    // market trade to get the funds in the right place
-    if (autoBalance === 'market') {
-        // market sell/buy the value
-        logger.info('Exchanging value with market order');
-        logger.dim(await placeMarketOrder(context, toCancel.side, toCancel.amount));
-    }
-
-    // place a new order (if enough funds), positioned at the end of ping list, the right distance after the existing last one
-    let price = 0;
-    if (pings.length > 0) {
-        const lastPing = pings[pings.length - 1];
-        price = lastPing.side === 'buy' ? lastPing.price - p.pingStep : lastPing.price + p.pingStep;
-        logger.info(`Already some pings. Step ${p.pingStep}. Last ping price ${lastPing.price}`);
-    } else {
-        const firstPong = pongs[0];
-        price = firstPong.side === 'buy' ? firstPong.price + p.pongDistance : firstPong.price - p.pongDistance;
-        logger.info(`Creating first ping. pong distance ${p.pongDistance}. first pong price ${firstPong.price}`);
-    }
-
-    // Get some of the setting for the new order
-    const side = toCancel.side === 'buy' ? 'sell' : 'buy';
-    const amount = toCancel.amount;
-
-    // place the order and add it to the list
-    pings.push(await placeLimitOrder(context, side, price, amount, p.tag));
-
-    // deal with a delayed order to exchange the value
-    if (autoBalance === 'limit') {
-        // place an iceberg order here to move the value asap
-        pendingOrders.push(placeIcebergOrder(context, toCancel.side, toCancel.amount, price, p.tag));
-    }
-}
-
-
 /**
  * Helper to tidy up the initial list of orders
  * @param orders
@@ -177,16 +59,49 @@ function cleanOrderList(orders) {
         .sort((a, b) => (a.side === 'buy' ? b.price - a.price : a.price - b.price));
 }
 
+/**
+ * Shuffles the order list closer to the price by moving the order that is furthest away to just above the closest
+ * @param context
+ * @param p
+ * @param orders
+ * @param stepSize
+ * @returns {Promise<void|this>}
+ */
+async function shuffleBook(context, p, orders, stepSize) {
+    const { ex = {}, symbol = {} } = context;
+    logger.info('Price has moved outside Ping pong order range - checking if we need to shuffle closer to the price...');
+
+    // We only want to make changes if the price gets far enough away from the orders
+    const ticker = await ex.api.ticker(symbol);
+    const midPrice = (parseFloat(ticker.bid) + parseFloat(ticker.ask)) / 2;
+    const gap = Math.abs(orders[0].price - midPrice);
+    //logger.info(`spread: ${p.pongDistance}, top: ${orders[0].price}, ticker: ${midPrice}, gap: ${gap}`);
+
+    // If the price isn't far enough away, do nothing
+    if (gap <= p.pongDistance) {
+        return orders;
+    }
+
+    // we have work to do
+
+    // Cancel the order furthest from the current price
+    const toCancel = orders.pop();
+    logger.info(`Cancelling ping pong order ${toCancel.side} ${toCancel.amount} at ${toCancel.price}`);
+    await ex.api.cancelOrders([toCancel.order]);
+
+    // and add a new one at the top, closer to the price
+    const price = toCancel.side === 'buy' ? orders[0].price + stepSize : orders[0].price - stepSize;
+    orders.push(await placeLimitOrder(context, toCancel.side, price, toCancel.amount, p.tag));
+
+    // keep it in order
+    return cleanOrderList(orders);
+}
 
 /**
  * Ping Pong Loop handler
  */
 module.exports = async (context, startingPings, startingPongs, p, autoBalance) => {
     const { ex = {}, session = '' } = context;
-
-    // A list of pending limit order promises that are being used to rebalance
-    const pendingOrders = [];
-    let lastRebalance = new Date();
 
     // Get the finds and pongs into order
     let pongs = cleanOrderList(startingPongs);
@@ -253,50 +168,20 @@ module.exports = async (context, startingPings, startingPongs, p, autoBalance) =
         // Decide if we need to re-balance the book
         const pingCount = pings.length;
         const pongCount = pongs.length;
-        const totalOrders = pingCount + pongCount;
+        const couldAdjustPongs = (pingCount === 0 && pongCount > 0);
+        const couldAdjustPings = (pongCount === 0 && pingCount > 0);
         const isIdle = waitTime > ex.minPollingDelay;
-        if (isIdle && (autoBalance === 'market' || autoBalance === 'limit') && totalOrders > 9) {
-            const threshold = p.autoBalanceAt;
-            const pingRatio = pingCount / totalOrders;
-            if (pingRatio < threshold) {
-                logger.progress(`Position off balance (only ${Math.round(pingRatio * 100)}% of orders are pings}`);
-                logger.progress(`Rebalancing book with a ${autoBalance} trade`);
-
-                await rebalanceBook(context, p, autoBalance, pings, pongs, pendingOrders);
-                lastRebalance = new Date();
+        if (isIdle && autoBalance === 'shuffle' && (couldAdjustPings || couldAdjustPongs)) {
+            if (couldAdjustPings) {
+                pings = await shuffleBook(context, p, pings, p.pingStep);
+            } else {
+                pongs = await shuffleBook(context, p, pongs, p.pongStep);
             }
-
-            // do something similar if the pong ratio is too low.
-            const pongRatio = pongCount / totalOrders;
-            if (pongRatio < threshold) {
-                logger.progress(`Position off balance (only ${Math.round(pongRatio * 100)}% of orders are pongs}`);
-                logger.progress(`Rebalancing book with a ${autoBalance} trade`);
-
-                await rebalanceBook(context, p, autoBalance, pongs, pings, pendingOrders);
-                lastRebalance = new Date();
-            }
-
-            // clean them both
-            pings = cleanOrderList(pings);
-            pongs = cleanOrderList(pongs);
-        }
-
-        // Clear any pending orders that will have completed by now
-        if (pendingOrders.length && hasBeenIdleLongEnough(lastRebalance)) {
-            logger.progress('All pending rebalance orders should be complete. clearing down pending orders...');
-            await Promise.all(pendingOrders);
-            pendingOrders.length = 0;
         }
 
         // wait for a bit before deciding what to do next
         await ex.waitSeconds(waitTime);
         if (waitTime < ex.maxPollingDelay) waitTime += 1;
-    }
-
-    // Wait for any pending orders to complete.
-    if (pendingOrders.length) {
-        logger.progress('awaiting all pending rebalnce orders to complete...');
-        await Promise.all(pendingOrders);
     }
 
     ex.endAlgoOrder(id);

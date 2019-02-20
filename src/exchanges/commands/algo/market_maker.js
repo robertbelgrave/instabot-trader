@@ -20,7 +20,6 @@ module.exports = async (context, args) => {
 
         spread: '30',
         autoBalance: 'none',
-        autoBalanceAt: '20%',
 
         tag: 'mm',
     }, args);
@@ -38,9 +37,6 @@ module.exports = async (context, args) => {
 
     // get the spread
     p.spread = Math.max(parseFloat(p.spread), 0);
-
-    // and the auto balance threshold
-    p.autoBalanceAt = ex.parsePercentage(p.autoBalanceAt);
 
     // Work out other values that will be useful
     p.bidFrom = (p.spread / 2) + p.bidStep;
