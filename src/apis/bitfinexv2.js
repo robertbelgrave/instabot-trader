@@ -118,7 +118,8 @@ class BitfinexApiv2 extends ApiInterface {
         });
 
         ws.on('open', () => {
-            logger.debug('socket opened');
+            const now = new Date();
+            logger.debug(`socket opened - ${now.toTimeString()}`);
             ws.auth();
         });
 
