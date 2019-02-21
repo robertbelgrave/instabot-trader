@@ -676,6 +676,14 @@ contain the URL of your bot instance.
                                                     </div>
                                                 </div>
                                             </div>
+                                            <div class="column">
+                                                <div class="field">
+                                                    <label class="label">Auto balance every</label>
+                                                    <div class="control">
+                                                        <input name="autoBalanceEvery" class="input mm-autobalanceevery mm-field" type="text" value="30s">
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <button class="trigger-action button is-medium is-success" data-action="market-maker">Execute</button>
@@ -1003,7 +1011,7 @@ bfxmargin(BTCUSD) {
             marketMakerOrder(
                 bidAmount={{bidSize}}, bidStep={{bidStep}}, bidCount={{bidCount}},
                 askAmount={{askSize}}, askStep={{askStep}}, askCount={{askCount}},
-                spread={{spread}}, autoBalance={{autoBalance}}
+                spread={{spread}}, autoBalance={{autoBalance}}, autoBalanceEvery={{autoBalanceEvery}}
             );
         }
     </div>

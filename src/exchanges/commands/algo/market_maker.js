@@ -20,6 +20,7 @@ module.exports = async (context, args) => {
 
         spread: '30',
         autoBalance: 'none',
+        autoBalanceEvery: '0',
 
         tag: 'mm',
     }, args);
@@ -48,6 +49,8 @@ module.exports = async (context, args) => {
     p.bidTotal = ex.roundAsset(symbol, p.bidAmount * p.bidCount);
     p.askTotal = ex.roundAsset(symbol, p.askAmount * p.askCount);
     p.total = ex.roundAsset(symbol, p.bidTotal + p.askTotal);
+
+    p.autoBalanceEvery = ex.timeToSeconds(p.autoBalanceEvery, 0);
 
 
     // some settings to define to allow us to lean on the ping pong order code.

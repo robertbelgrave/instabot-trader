@@ -70,7 +70,7 @@ class BitfinexApiv2 extends ApiInterface {
 
         // handlers to track the state of ordes
         ws.onOrderSnapshot(eventFilter, (orders) => {
-            logger.debug('order snapshot');
+            logger.debug(`order snapshot - ${orders.length} orders`);
             this.onOrderSnapshot(orders);
         });
 
