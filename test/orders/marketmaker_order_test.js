@@ -109,7 +109,7 @@ describe('Market Maker Orders', () => {
     });
 
 
-    it.only('can place basic and auto balancing market maker order', async () => {
+    it('can place basic and auto balancing market maker order', async () => {
         const context = { ex: exchange, symbol: 'btcusd' };
 
         const limit = sinon.stub(exchange.api, 'limitOrder');
@@ -141,14 +141,13 @@ describe('Market Maker Orders', () => {
             ['btcusd', 0.1, 3010, 'buy', false],
         ];
 
-        logger.setLevel(2);
         ticker.onCall(0).returns({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
         ticker.onCall(1).returns({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
-        ticker.onCall(1).returns({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
-        ticker.onCall(1).returns({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
-        ticker.onCall(1).returns({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
-        ticker.onCall(1).returns({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
         ticker.onCall(2).returns({ mid: '3025', bid: '3010', ask: '3040', last_price: '3010' });
+        ticker.onCall(3).returns({ mid: '3025', bid: '3010', ask: '3040', last_price: '3010' });
+        ticker.onCall(4).returns({ mid: '3025', bid: '3010', ask: '3040', last_price: '3010' });
+        ticker.onCall(5).returns({ mid: '3025', bid: '3010', ask: '3040', last_price: '3010' });
+        ticker.onCall(6).returns({ mid: '3025', bid: '3010', ask: '3040', last_price: '3010' });
 
         const finished = sinon.fake();
         marketMakerOrder(context, args).then((orders) => {
@@ -179,7 +178,7 @@ describe('Market Maker Orders', () => {
         assert.equal(finished.callCount, 1);
         assert.equal(limit.callCount, 5);
         assert.deepEqual(limit.args, expectLimit);
-        assert.equal(ticker.callCount, 5);
+        assert.equal(ticker.callCount, 3);
     });
 
 
