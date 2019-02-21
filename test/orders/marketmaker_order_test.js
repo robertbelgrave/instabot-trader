@@ -122,11 +122,12 @@ describe('Market Maker Orders', () => {
             { name: 'bidAmount', value: '0.1', index: 0 },
             { name: 'bidStep', value: '10', index: 1 },
             { name: 'bidCount', value: '4', index: 2 },
-            { name: 'askAmount', value: '0.1', index: 0 },
-            { name: 'askStep', value: '10', index: 1 },
-            { name: 'askCount', value: '0', index: 2 },
-            { name: 'spread', value: '20', index: 3 },
-            { name: 'autoBalance', value: 'shuffle', index: 4 },
+            { name: 'askAmount', value: '0.1', index: 3 },
+            { name: 'askStep', value: '10', index: 4 },
+            { name: 'askCount', value: '0', index: 5 },
+            { name: 'spread', value: '20', index: 6 },
+            { name: 'autoBalance', value: 'shuffle', index: 7 },
+            { name: 'autoBalanceEvery', value: '3s', index: 8 },
         ];
 
         const expectLimit = [
@@ -140,7 +141,12 @@ describe('Market Maker Orders', () => {
             ['btcusd', 0.1, 3010, 'buy', false],
         ];
 
+        logger.setLevel(2);
         ticker.onCall(0).returns({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
+        ticker.onCall(1).returns({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
+        ticker.onCall(1).returns({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
+        ticker.onCall(1).returns({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
+        ticker.onCall(1).returns({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
         ticker.onCall(1).returns({ mid: '3025', bid: '3000', ask: '3040', last_price: '3010' });
         ticker.onCall(2).returns({ mid: '3025', bid: '3010', ask: '3040', last_price: '3010' });
 
@@ -162,7 +168,7 @@ describe('Market Maker Orders', () => {
         assert.equal(limit.callCount, 4);
 
         // wait long enough for the price to go up, bottom order should cancel, top order added
-        await fakeTimer.tickAsync(2000, 100);
+        await fakeTimer.tickAsync(10000, 100);
 
         // Start marking the orders as filled
         getOrder.resolves({ is_filled: false, is_open: false });
@@ -173,7 +179,7 @@ describe('Market Maker Orders', () => {
         assert.equal(finished.callCount, 1);
         assert.equal(limit.callCount, 5);
         assert.deepEqual(limit.args, expectLimit);
-        assert.equal(ticker.callCount, 3);
+        assert.equal(ticker.callCount, 5);
     });
 
 

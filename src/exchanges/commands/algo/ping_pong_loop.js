@@ -69,13 +69,11 @@ function cleanOrderList(orders) {
  */
 async function shuffleBook(context, p, orders, stepSize) {
     const { ex = {}, symbol = {} } = context;
-    logger.info('Price has moved outside Ping pong order range - checking if we need to shuffle closer to the price...');
 
     // We only want to make changes if the price gets far enough away from the orders
     const ticker = await ex.api.ticker(symbol);
     const midPrice = (parseFloat(ticker.bid) + parseFloat(ticker.ask)) / 2;
     const gap = Math.abs(orders[0].price - midPrice);
-    //logger.info(`spread: ${p.pongDistance}, top: ${orders[0].price}, ticker: ${midPrice}, gap: ${gap}`);
 
     // If the price isn't far enough away, do nothing
     if (gap <= p.pongDistance) {
@@ -83,11 +81,13 @@ async function shuffleBook(context, p, orders, stepSize) {
     }
 
     // we have work to do
+    logger.info('Price has moved outside Ping pong order range');
+    logger.info(`top order: ${orders[0].price}, ticker: ${midPrice}, gap: ${gap}`);
 
     // Cancel the order furthest from the current price
     const toCancel = orders.pop();
-    logger.info(`Cancelling ping pong order ${toCancel.side} ${toCancel.amount} at ${toCancel.price}`);
     await ex.api.cancelOrders([toCancel.order]);
+    logger.info(`Cancelled ping pong order: ${toCancel.side} ${toCancel.amount} at ${toCancel.price}`);
 
     // and add a new one at the top, closer to the price
     const price = toCancel.side === 'buy' ? orders[0].price + stepSize : orders[0].price - stepSize;
@@ -114,6 +114,9 @@ module.exports = async (context, startingPings, startingPongs, p, autoBalance) =
     const id = uuid();
     const defaultSide = pings.length ? pings[0].side : (pongs.length ? pongs[0].side : 'buy');
     ex.startAlgoOrder(id, defaultSide, session, p.tag);
+
+    // track some time for auto balancing
+    let lastAutoBalance = Date.now();
 
     // now we have to wait for the pings to be filled
     // (actually only need to check the first one that would be hit)
@@ -171,12 +174,17 @@ module.exports = async (context, startingPings, startingPongs, p, autoBalance) =
         const couldAdjustPongs = (pingCount === 0 && pongCount > 0);
         const couldAdjustPings = (pongCount === 0 && pingCount > 0);
         const isIdle = waitTime > ex.minPollingDelay;
-        if (isIdle && autoBalance === 'shuffle' && (couldAdjustPings || couldAdjustPongs)) {
+        const timeSinceLastAutoBalance = (Date.now() - lastAutoBalance) / 1000;
+        const waitedLongEnough = timeSinceLastAutoBalance > p.autoBalanceEvery;
+        if (isIdle && autoBalance === 'shuffle' && waitedLongEnough && (couldAdjustPings || couldAdjustPongs)) {
             if (couldAdjustPings) {
                 pings = await shuffleBook(context, p, pings, p.pingStep);
             } else {
                 pongs = await shuffleBook(context, p, pongs, p.pongStep);
             }
+
+            // note the time that we last checked
+            lastAutoBalance = Date.now();
         }
 
         // wait for a bit before deciding what to do next

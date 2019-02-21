@@ -40,6 +40,9 @@ module.exports = async (context, args) => {
     p.pingStep = Math.abs(parseFloat(p.to) - parseFloat(p.from)) / p.orderCount;
     p.pongStep = Math.abs(parseFloat(p.to) - parseFloat(p.from)) / p.orderCount;
 
+    p.autoBalance = 'none';
+    p.autoBalanceEvery = 0;
+
     // If ping and pong amounts are not given, work them out from amount or position
     if ((p.pingAmount === 0) && (p.pongAmount === 0)) {
         const modifiedPosition = await ex.positionToAmount(symbol, p.position, p.side, p.amount);
