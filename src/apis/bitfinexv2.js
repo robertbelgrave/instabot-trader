@@ -422,12 +422,27 @@ class BitfinexApiv2 extends ApiInterface {
     }
 
     /**
-     * Get order info
+     * Get current order info
      * @param orderInfo
      * @returns {PromiseLike<{id: *, side: *, amount: number, remaining: number, executed: number, is_filled: boolean}> | Promise<{id: *, side: *, amount: number, remaining: number, executed: number, is_filled: boolean}>}
      */
     async order(orderInfo) {
-        return this.state.orders.filter(order => order.id === orderInfo.id).shift();
+        // Find the order in out active order state
+        const order = this.state.orders.filter(o => o.id === orderInfo.id).shift();
+        if (order) {
+            return order;
+        }
+
+        // wasn't there, so report it as closed.
+        return {
+            id: orderInfo.id,
+            side: orderInfo.side,
+            amount: parseFloat(orderInfo.size),
+            remaining: 0,
+            executed: parseFloat(orderInfo.size),
+            is_filled: false,
+            is_open: false,
+        };
     }
 }
 
