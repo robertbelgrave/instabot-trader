@@ -12,7 +12,9 @@
       "key": "api-key",
       "secret": "api-secret",
       "margin": false,
-      "maxLeverage": 1
+      "maxLeverage": 1,
+      "drawFills": false,
+      "largeFillSize": 10
     },
     {
       "name": "bfxmargin",
@@ -20,7 +22,9 @@
       "key": "api-key",
       "secret": "api-secret",
       "margin": true,
-      "maxLeverage": 2
+      "maxLeverage": 2,
+      "drawFills": false,
+      "largeFillSize": 10
     },
     {
       "name": "coinbase",

@@ -1,3 +1,4 @@
+/* eslint-disable no-await-in-loop */
 const BFX = require('bitfinex-api-node');
 const Order = require('bfx-api-node-models').Order;
 const logger = require('../common/logger').logger;
@@ -10,21 +11,28 @@ class BitfinexApiv2 extends ApiInterface {
      * Set up the API
      * @param key
      * @param secret
-     * @param margin
-     * @param maxLeverage
+     * @param options
      */
-    constructor(key, secret, margin, maxLeverage) {
+    constructor(key, secret, options) {
         super(key, secret);
 
         // Keep hold of the API key and secret
         this.key = key;
         this.secret = secret;
-        this.isMargin = !!margin;
-        this.maxLeverage = 1;
-        if (maxLeverage && this.isMargin) {
-            this.maxLeverage = maxLeverage > 3.33 ? 3.33 : maxLeverage;
+
+        // margin
+        this.isMargin = !!(options.margin || false);
+        this.maxLeverage = Math.min(options.maxLeverage || 1, 3.33);
+
+        // optionally draw markers on the chart when orders are filled
+        this.nextMarkId = Date.now();
+        this.drawFills = options.drawFills || false;
+        this.largeFillSize = options.largeFillSize || 10;
+        if (this.largeFillSize <= 0.01) {
+            this.largeFillSize = 1;
         }
 
+        // create the Bfx api wrapper
         this.bfx = new BFX({
             apiKey: key,
             apiSecret: secret,
@@ -35,6 +43,7 @@ class BitfinexApiv2 extends ApiInterface {
             },
         });
 
+        // get the websocket connection out of it
         this.ws = this.bfx.ws();
 
         // cache of some data
@@ -45,6 +54,8 @@ class BitfinexApiv2 extends ApiInterface {
             walletTimer: null,
             orders: [],
         };
+
+        // a list of the symbols we are tracking
         this.symbols = [];
     }
 
@@ -264,6 +275,7 @@ class BitfinexApiv2 extends ApiInterface {
                 status: order.status,
                 type: order.type,
                 flags: order.flags,
+                symbol: order.symbol,
                 is_filled: order.amount === 0,
                 is_canceled: isCanceled,
                 is_execited: isExecuted,
@@ -293,6 +305,9 @@ class BitfinexApiv2 extends ApiInterface {
             const existing = this.state.orders.find(o => o.id === mapped.id);
             if (existing) {
                 // ok, already had a matching entry, so use that instead.
+                // this happens when we create an order and we've been told about it over the socket before
+                // we had a chance to add it locally - we'd prefer the version from over the socket,
+                // as it will be more accurate
                 return existing;
             }
         }
@@ -303,7 +318,47 @@ class BitfinexApiv2 extends ApiInterface {
         // remember the new data
         this.state.orders.push(mapped);
 
+        // see if we need to add a marker to the chart
+        this.addMarkerIfFilled(mapped);
+
         return mapped;
+    }
+
+    /**
+     * Attempt to add a marker to the chart when an order fills
+     * @param order
+     */
+    addMarkerIfFilled(order) {
+        // not drawing fills? - do nothing
+        if (!this.drawFills) {
+            return;
+        }
+
+        // only want to bother if the order has been filled
+        if (!order.is_filled) {
+            return;
+        }
+
+        // work out the size of the blob to draw.
+        const normalisedAmount = order.amount > this.largeFillSize ? 1 : order.amount / this.largeFillSize;
+        const markSize = Math.round(1 + (normalisedAmount * 15));
+        const markColour = order.side === 'buy' ? '#11FF33' : '#FF1133';
+        this.nextMarkId += 1;
+        const props = {
+            type: 'ucm-ui-chart',
+            info: {
+                type: 'marker_create',
+                id: `mark_${this.nextMarkId}`,
+                ts: order.last_updated,
+                symbol: order.symbol,
+                content: `${order.status} - id ${order.id}.`,
+                color_bg: markColour,
+                size_min: markSize,
+            },
+        };
+
+        // send it
+        this.ws.send([0, 'n', null, props]);
     }
 
     /**
@@ -368,7 +423,7 @@ class BitfinexApiv2 extends ApiInterface {
      * @param isEverything
      * @returns {*}
      */
-    async limitOrder(symbol, amount, price, side, isEverything) {
+    async limitOrder(symbol, amount, price, side, _isEverything) {
         return this.newOrder(symbol, amount, price, side, this.isMargin ? Order.type.LIMIT : Order.type.EXCHANGE_LIMIT);
     }
 
@@ -379,7 +434,7 @@ class BitfinexApiv2 extends ApiInterface {
      * @param side - buy or sell
      * @param isEverything
      */
-    async marketOrder(symbol, amount, side, isEverything) {
+    async marketOrder(symbol, amount, side, _isEverything) {
         return this.newOrder(symbol, amount, 0, side, this.isMargin ? Order.type.MARKET : Order.type.EXCHANGE_MARKET);
     }
 
@@ -392,7 +447,7 @@ class BitfinexApiv2 extends ApiInterface {
      * @param trigger - mark price, index price etc (not used on bfx)
      * @returns {Promise<void>}
      */
-    async stopOrder(symbol, amount, price, side, trigger) {
+    async stopOrder(symbol, amount, price, side, _trigger) {
         return this.newOrder(symbol, amount, price, side, this.isMargin ? Order.type.STOP : Order.type.EXCHANGE_STOP, this.isMargin);
     }
 
@@ -434,6 +489,8 @@ class BitfinexApiv2 extends ApiInterface {
         }
 
         // wasn't there, so report it as closed.
+        logger.error('Asked for order info, but order not in cache. Treating as closed. requested order:');
+        logger.error(orderInfo);
         return {
             id: orderInfo.id,
             side: orderInfo.side,
