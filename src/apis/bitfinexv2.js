@@ -79,30 +79,6 @@ class BitfinexApiv2 extends ApiInterface {
             });
         });
 
-        // handlers to track the state of ordes
-        ws.onOrderSnapshot(eventFilter, (orders) => {
-            logger.debug(`order snapshot - ${orders.length} orders`);
-            this.onOrderSnapshot(orders);
-        });
-
-        ws.onOrderNew(eventFilter, (order) => {
-            logger.debug(`New order seen - id:${order.id}`);
-            this.onOrderUpdate(order);
-            this.refreshAvailableFunds();
-        });
-
-        ws.onOrderUpdate(eventFilter, (order) => {
-            logger.debug(`Order updated - id:${order.id}`);
-            this.onOrderUpdate(order);
-            this.refreshAvailableFunds();
-        });
-
-        ws.onOrderClose(eventFilter, (order) => {
-            logger.debug(`Order closed - id:${order.id}`);
-            this.onOrderUpdate(order);
-            this.refreshAvailableFunds();
-        });
-
         ws.subscribeTicker(`t${symbol}`);
 
         if (this.isMargin) {
@@ -144,6 +120,30 @@ class BitfinexApiv2 extends ApiInterface {
         });
 
         ws.onWalletUpdate({}, wallet => self.onWalletUpdate([wallet]));
+
+        // handlers to track the state of ordes
+        ws.onOrderSnapshot({}, (orders) => {
+            logger.debug(`order snapshot - ${orders.length} orders`);
+            this.onOrderSnapshot(orders);
+        });
+
+        ws.onOrderNew({}, (order) => {
+            logger.debug(`New order seen - id:${order.id}`);
+            this.onOrderUpdate(order);
+            this.refreshAvailableFunds();
+        });
+
+        ws.onOrderUpdate({}, (order) => {
+            logger.debug(`Order updated - id:${order.id}`);
+            this.onOrderUpdate(order);
+            this.refreshAvailableFunds();
+        });
+
+        ws.onOrderClose({}, (order) => {
+            logger.debug(`Order closed - id:${order.id}`);
+            this.onOrderUpdate(order);
+            this.refreshAvailableFunds();
+        });
 
         // Happens once when we are authenticated. We use this to complete set up
         ws.once('auth', () => {
