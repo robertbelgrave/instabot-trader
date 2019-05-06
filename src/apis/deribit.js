@@ -296,6 +296,7 @@ class DeribitApi extends ApiInterface {
             stopPx: price,
             execInst: trigger === 'index' ? 'index_price' : 'mark_price', // index price or mark price used for stop trigger
             time_in_force: 'good_til_cancelled',
+            reduceOnly: true,
         };
 
         return this.makeAuthRequest(`/api/v1/private/${side}`, params)
