@@ -6,13 +6,12 @@ const notifier = require('../../notifications/notifier');
  * Report account details (Deribit edition)
  */
 module.exports = (context) => {
-
     /**
      * Given a symbol (like ETH-PERPETUAL), figure out the currency (eth)
      * @param symbol
      * @returns currency
      */
-    getCurrencyFromSymbol = function(symbol) {
+    const getCurrencyFromSymbol = (symbol) => {
         const regex = /^(.{3})-(.*)/u;
         const m = regex.exec(symbol);
         if (m) {
@@ -21,8 +20,8 @@ module.exports = (context) => {
 
         // Default to btc / usd - not sure about this...
         // should really just throw an error
-        return 'btc' ;
-    }
+        return 'btc';
+    };
 
     const { ex = {}, symbol = '' } = context;
     logger.progress('NOTIFY ACCOUNT BALANCE');
