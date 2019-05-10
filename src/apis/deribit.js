@@ -355,10 +355,11 @@ class DeribitApi extends ApiInterface {
 
     /**
      * Get account details
+     * @param currency
      * @returns {*}
      */
-    account() {
-        return this.makeAuthRequest('/api/v1/private/account', {});
+    account(currency) {
+        return this.makeAuthRequest('/api/v1/private/account', { currency });
     }
 
     /**
