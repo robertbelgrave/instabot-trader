@@ -452,6 +452,7 @@ class Exchange {
 
         // Prevent silly small orders
         if (orderSize < this.symbolData.minOrderSize(symbol)) {
+            logger.results('ordersize is below min order size');
             orderSize = 0;
         }
 
