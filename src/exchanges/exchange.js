@@ -345,24 +345,6 @@ class Exchange {
     }
 
     /**
-     * Given a symbol (like ETH-PERPETUAL), figure out the pair (eth & usd)
-     * @param symbol
-     * @returns {*}
-     */
-    splitDashedSymbol(symbol) {
-        const regex = /^(.{3,4})-(.{3,})/u;
-        const m = regex.exec(symbol.toLowerCase());
-        if (m) {
-            const currency = m[2] == 'perpetual' ? 'usd' : m[2]
-            return { asset: m[1], currency: m[2] };
-        }
-
-        // Default to btc / usd - not sure about this...
-        // should really just throw an error
-        return { asset: 'btc', currency: 'usd' };
-    }
-
-    /**
      * Works out the current value of the portfolio by looking
      * at the amount of BTC and USD, and using the current price
      * Returns the value, in BTC
