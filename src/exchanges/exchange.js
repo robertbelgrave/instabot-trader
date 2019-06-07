@@ -270,6 +270,7 @@ class Exchange {
         }
 
         // Does not look like a valid quantity, so treat it as zero, as that is safest
+        logger.error(`Invalid offset of ${qty}. Treating as offset of 0`);
         return { value: 0, units: '' };
     }
 
@@ -423,7 +424,7 @@ class Exchange {
         }, 0);
 
         const roundedTotal = this.roundAsset(symbol, spendable);
-        logger.results(`Asset balance @ ${price}: ${roundedTotal}`);
+        logger.results(`Asset balance available @ ${price}: ${roundedTotal}`);
         return roundedTotal;
     }
 
@@ -451,8 +452,9 @@ class Exchange {
         orderSize = orderSize > available ? available : orderSize;
 
         // Prevent silly small orders
-        if (orderSize < this.symbolData.minOrderSize(symbol)) {
-            logger.results('ordersize is below min order size');
+        const minOrderSize = this.symbolData.minOrderSize(symbol);
+        if (orderSize < minOrderSize) {
+            logger.results(`ordersize ${orderSize} is below min order size of ${minOrderSize}`);
             orderSize = 0;
         }
 
@@ -562,4 +564,3 @@ class Exchange {
 }
 
 module.exports = Exchange;
-

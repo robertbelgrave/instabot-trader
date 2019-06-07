@@ -43,9 +43,25 @@ class Bitfinex extends Exchange {
         // This article (https://support.bitfinex.com/hc/en-us/articles/115003283709-What-is-the-minimum-order-size-)
         // suggests between $10 and $25 as the min order size, so I am taking the worst case value
         // and using that to work out a min.
-        const ticker = await this.api.ticker(symbol);
+
+        let minOrderSize = 1;
+        const pair = this.splitSymbol(symbol);
+        if (pair.currency.toUpperCase() === 'USD') {
+            const ticker = await this.api.ticker(symbol);
+            minOrderSize = util.roundDown(10 / parseFloat(ticker.bid), 5);
+        } else {
+            // look up the asset / USD pair, so we can work out how many == $10ish
+            const dummySymbol = `${pair.asset}USD`;
+            const ticker = await this.api.tickerDirect(dummySymbol.toUpperCase());
+            minOrderSize = util.roundDown(10 / parseFloat(ticker.bid), 5);
+            if (minOrderSize > 5) {
+                minOrderSize = Math.ceil(minOrderSize);
+            }
+        }
+
+        logger.info(`Min order size for ${symbol} is assumed to be ${minOrderSize}`);
         this.symbolData.update(symbol, {
-            minOrderSize: util.roundDown(25 / parseFloat(ticker.bid), 5),
+            minOrderSize,
             assetPrecision: 8,
             pricePrecision: 5,
         });
