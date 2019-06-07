@@ -156,8 +156,8 @@ contain the URL of your bot instance.
                         <div class="select is-info">
                             <select id="position-instrument" class="exchange-picker">
                                 <option selected="selected" value="deribit:BTC-PERPETUAL">Deribit Perps</option>
-                                <option value="deribit:BTC-28DEC18">Deribit Dec18 Futures</option>
-                                <option value="deribit:BTC-29MAR19">Deribit Mar19 Futures</option>
+                                <option value="deribit:BTC-28JUN19">Deribit Jun19 Futures</option>
+                                <option value="deribit:BTC-27SEP19">Deribit Sep19 Futures</option>
                                 <option value="bitfinex:BTCUSD">Bitfinex BTCUSD Spot</option>
                                 <option value="bfxmargin:BTCUSD">Bitfinex BTCUSD Margin</option>
                                 <option value="coinbase:BTC-EUR">Coinbase Pro BTC-EUR Spot</option>
@@ -311,8 +311,8 @@ contain the URL of your bot instance.
                         <div class="select is-info">
                             <select id="fomo-instrument" class="exchange-picker">
                                 <option selected="selected" value="deribit:BTC-PERPETUAL">Deribit Perps</option>
-                                <option value="deribit:BTC-28DEC18">Deribit Dec18 Futures</option>
-                                <option value="deribit:BTC-29MAR19">Deribit Mar19 Futures</option>
+                                <option value="deribit:BTC-28JUN19">Deribit Jun19 Futures</option>
+                                <option value="deribit:BTC-27SEP19">Deribit Sep19 Futures</option>
                                 <option value="bitfinex:BTCUSD">Bitfinex BTCUSD Spot</option>
                                 <option value="bfxmargin:BTCUSD">Bitfinex BTCUSD Margin</option>
                                 <option value="coinbase:BTC-EUR">Coinbase Pro BTC-EUR Spot</option>
@@ -559,8 +559,8 @@ contain the URL of your bot instance.
                         <div class="select is-info">
                             <select id="fomo-instrument" class="exchange-picker">
                                 <option selected="selected" value="deribit:BTC-PERPETUAL">Deribit Perps</option>
-                                <option value="deribit:BTC-28DEC18">Deribit Dec18 Futures</option>
-                                <option value="deribit:BTC-29MAR19">Deribit Mar19 Futures</option>
+                                <option value="deribit:BTC-28JUN19">Deribit Jun19 Futures</option>
+                                <option value="deribit:BTC-27SEP19">Deribit Sep19 Futures</option>
                                 <option value="bitfinex:BTCUSD">Bitfinex BTCUSD Spot</option>
                                 <option value="bfxmargin:BTCUSD">Bitfinex BTCUSD Margin</option>
                                 <option value="coinbase:BTC-EUR">Coinbase Pro BTC-EUR Spot</option>
@@ -718,7 +718,7 @@ contain the URL of your bot instance.
                                     Deribit
                                 </p>
                                 <p class="subtitle">
-                                    BTC-PERPETUAL &amp; BTC-28DEC18
+                                    BTC-PERPETUAL
                                 </p>
                                 <div class="content has-text-centered">
                                     <button class="trigger-action button is-medium is-info" data-action="fomo-deribit-balance">Deribit Balance</button>
@@ -1027,7 +1027,6 @@ bfxmargin(BTCUSD) {
     <!-- Deribit Balance -->
     <div id="fomo-deribit-balance">
         deribit(BTC-PERPETUAL) { balance() }
-        deribit(BTC-28DEC18) { balance() }
     </div>
 
     <!-- Coinbase Balance -->

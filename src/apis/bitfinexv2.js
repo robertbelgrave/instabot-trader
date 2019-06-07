@@ -377,6 +377,31 @@ class BitfinexApiv2 extends ApiInterface {
     }
 
     /**
+     * Find out the price of a symbol directly (don't open a ws feed for it)
+     * @param {*} symbol
+     */
+    async tickerDirect(symbol) {
+        try {
+            const ticker = await this.bfx.rest().ticker(`t${symbol}`);
+            return {
+                symbol,
+                bid: String(ticker.bid),
+                ask: String(ticker.ask),
+                last_price: String(ticker.lastPrice),
+            };
+        } catch (err) {
+            logger.error(`failed to get ${symbol} ticker`);
+            logger.error(err);
+            return {
+                symbol: symbol.toUpperCase(),
+                bid: String(1),
+                ask: String(1),
+                last_price: String(1),
+            };
+        }
+    }
+
+    /**
      * Get the balances
      * @returns {*}
      */

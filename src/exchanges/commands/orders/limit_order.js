@@ -37,6 +37,10 @@ module.exports = async (context, args) => {
 
     // Try and place the order
     const orderPrice = await ex.offsetToAbsolutePrice(symbol, side, params.offset);
+    if (orderPrice < 0) {
+        logger.error(`Order price can not be below zero. calculated as ${orderPrice}`);
+        return Promise.reject('Order price below zero not possible.');
+    }
     const details = await ex.orderSizeFromAmount(symbol, side, orderPrice, amountStr);
     if (details.orderSize === 0) {
         return Promise.reject('No funds available or order size is 0');
