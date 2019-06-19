@@ -17,6 +17,7 @@ const cancelOrders = require('./commands/cancel_orders');
 const notify = require('./commands/notify');
 const balance = require('./commands/balance');
 const wait = require('./commands/wait');
+const openPositions = require('./commands/open_positions');
 
 // and some support functions
 const scaledOrderSize = require('./support/scaled_order_size');
@@ -71,13 +72,14 @@ class Exchange {
             wait,
             notify,
             balance,
+	    openPositions,
         };
 
         this.commandWhiteList = [
             'icebergOrder', 'scaledOrder', 'twapOrder', 'pingPongOrder', 'marketMakerOrder',
             'steppedMarketOrder', 'accDisOrder',
             'limitOrder', 'marketOrder', 'stopMarketOrder',
-            'cancelOrders', 'wait', 'notify', 'balance'];
+            'cancelOrders', 'wait', 'notify', 'balance', 'openPositions'];
     }
 
     /**
